@@ -22,7 +22,7 @@ return new class extends Migration
             $table->json('etapes');
             $table->integer('etape_actuelle')->default(0);
             $table->decimal('rendement', 5, 2)->nullable(); // Rendement de la transformation (en pourcentage)
-            $table->enum('statut', ['brouillon', 'en_cours', 'finalisee'])
+            $table->enum('statut', ['brouillon', 'en_cours', 'complete'])
                 ->default('brouillon');
 
             $table->dateTime('date_debut')->nullable();
