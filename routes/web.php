@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TransformationController;
 use Illuminate\Support\Facades\Route;
 
 // ponytail: sample data until step 2 (Eloquent models Produit + Etape replace this array)
@@ -7,8 +8,11 @@ function produits(): array
 {
     return [
         'miel-de-lavande' => [
-            'slug' => 'miel-de-lavande', 'nom' => 'Miel de lavande', 'categorie' => 'Épicerie sucrée',
-            'lot' => 'NT-2026-0413', 'origine' => 'Valensole, Alpes-de-Haute-Provence',
+            'slug' => 'miel-de-lavande',
+            'nom' => 'Miel de lavande',
+            'categorie' => 'Épicerie sucrée',
+            'lot' => 'NT-2026-0413',
+            'origine' => 'Valensole, Alpes-de-Haute-Provence',
             'certifs' => [
                 ['type' => 'Bio', 'statut' => 'vérifié', 'organisme' => 'Ecocert FR-BIO-01'],
                 ['type' => 'Local', 'statut' => 'vérifié', 'organisme' => '< 150 km du point de vente'],
@@ -21,8 +25,11 @@ function produits(): array
             ],
         ],
         'lentilles-vertes-du-puy' => [
-            'slug' => 'lentilles-vertes-du-puy', 'nom' => 'Lentilles vertes du Puy', 'categorie' => 'Légumineuses',
-            'lot' => 'NT-2026-0388', 'origine' => 'Haute-Loire',
+            'slug' => 'lentilles-vertes-du-puy',
+            'nom' => 'Lentilles vertes du Puy',
+            'categorie' => 'Légumineuses',
+            'lot' => 'NT-2026-0388',
+            'origine' => 'Haute-Loire',
             'certifs' => [
                 ['type' => 'Local', 'statut' => 'vérifié', 'organisme' => 'AOP Lentille verte du Puy'],
             ],
@@ -34,8 +41,11 @@ function produits(): array
             ],
         ],
         'cafe-arabica-cajamarca' => [
-            'slug' => 'cafe-arabica-cajamarca', 'nom' => 'Café arabica Cajamarca', 'categorie' => 'Boissons',
-            'lot' => 'NT-2026-0201', 'origine' => 'Cajamarca, Pérou',
+            'slug' => 'cafe-arabica-cajamarca',
+            'nom' => 'Café arabica Cajamarca',
+            'categorie' => 'Boissons',
+            'lot' => 'NT-2026-0201',
+            'origine' => 'Cajamarca, Pérou',
             'certifs' => [
                 ['type' => 'Équitable', 'statut' => 'vérifié', 'organisme' => 'Fairtrade FLO-ID 3021'],
                 ['type' => 'Bio', 'statut' => 'vérifié', 'organisme' => 'Control Union PE-BIO-149'],
@@ -48,8 +58,11 @@ function produits(): array
             ],
         ],
         'tomates-cerises' => [
-            'slug' => 'tomates-cerises', 'nom' => 'Tomates cerises « naturelles »', 'categorie' => 'Fruits & légumes',
-            'lot' => 'NT-2026-0450', 'origine' => 'Almería, Espagne',
+            'slug' => 'tomates-cerises',
+            'nom' => 'Tomates cerises « naturelles »',
+            'categorie' => 'Fruits & légumes',
+            'lot' => 'NT-2026-0450',
+            'origine' => 'Almería, Espagne',
             'certifs' => [
                 ['type' => 'Bio', 'statut' => 'déclaré', 'organisme' => 'Aucun certificat fourni'],
             ],
@@ -66,7 +79,7 @@ function produits(): array
 Route::get('/', function () {
     $q = mb_strtolower(trim(request('q', '')));
     $all = produits();
-    $found = array_filter($all, fn ($p) => str_contains(mb_strtolower($p['lot'].' '.$p['nom']), $q));
+    $found = array_filter($all, fn($p) => str_contains(mb_strtolower($p['lot'] . ' ' . $p['nom']), $q));
 
     return view('front.home', ['produits' => $found, 'hero' => $all['miel-de-lavande']]);
 })->name('home');
@@ -76,14 +89,41 @@ Route::get('/produits/{slug}', function (string $slug) {
 })->name('produit');
 
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', fn () => view('admin.dashboard', ['produits' => produits()]))->name('dashboard');
+    Route::get('/', fn() => view('admin.dashboard', ['produits' => produits()]))->name('dashboard');
     Route::get('/produits', function () {
         $q = mb_strtolower(trim(request('q', '')));
-        $produits = array_filter(produits(), fn ($p) => str_contains(mb_strtolower($p['lot'].' '.$p['nom']), $q)
+        $produits = array_filter(produits(), fn($p) => str_contains(mb_strtolower($p['lot'] . ' ' . $p['nom']), $q)
             && (! request('categorie') || $p['categorie'] === request('categorie'))
             && (! request('label') || in_array(request('label'), array_column($p['certifs'], 'type'))));
 
         return view('admin.produits.index', ['produits' => $produits, 'categories' => array_unique(array_column(produits(), 'categorie'))]);
     })->name('produits.index');
-    Route::get('/produits/create', fn () => view('admin.produits.form'))->name('produits.create');
+    Route::get('/produits/create', fn() => view('admin.produits.form'))->name('produits.create');
+});
+
+
+
+
+
+
+Route::resource('transformations', \App\Http\Controllers\TransformationController::class);
+Route::prefix('transformations')->name('transformations.')->group(function () {
+    Route::post(
+        '/{transformation}/lancer',
+        [TransformationController::class, 'lancer']
+    )
+        ->name('lancer');
+
+    Route::post(
+        '/{transformation}/etape/{index}/terminer',
+        [TransformationController::class, 'terminerEtape']
+    )
+        ->name('etape.terminer');
+    Route::patch('/{transformation}/etapes', [TransformationController::class, 'updateEtape'])
+        ->name('etapes.update');
+    Route::post(
+        '/{transformation}/finaliser',
+        [TransformationController::class, 'finaliser']
+    )
+        ->name('finaliser');
 });
