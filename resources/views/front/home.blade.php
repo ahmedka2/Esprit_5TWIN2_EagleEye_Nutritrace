@@ -38,7 +38,10 @@
             <div class="stamps stamps--sm">
                 @foreach ($p['certifs'] as $c) <x-cert-badge :cert="$c" /> @endforeach
             </div>
-            <p class="card-co2"><span class="mono">{{ number_format($total, 2, ',', ' ') }}</span> kg CO₂e · {{ count($p['etapes']) }} étapes</p>
+            <div class="card-foot">
+                <p class="card-co2"><span class="mono">{{ number_format($total, 2, ',', ' ') }}</span> kg CO₂e<span class="card-steps">{{ count($p['etapes']) }} étapes</span></p>
+                @isset($ecoScores[$p['lot_id']]) <x-eco-score :score="$ecoScores[$p['lot_id']]" /> @endisset
+            </div>
         </li>
         @if ($loop->last)</ul>@endif
     @empty

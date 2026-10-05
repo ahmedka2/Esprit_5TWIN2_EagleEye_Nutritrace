@@ -43,6 +43,14 @@
             </tbody>
             <tfoot><tr><th scope="row" colspan="2">Total par unité</th><td class="num mono">{{ number_format($total, 2, ',', ' ') }}</td><td class="num mono">100 %</td></tr></tfoot>
         </table>
+
+        @if ($empreinte)
+            <dl class="read-list">
+                <div><dt>Carbone</dt><dd><span class="mono">{{ number_format($empreinte->co2_kg, 2, ',', ' ') }}</span> kg CO₂e</dd></div>
+                <div><dt>Eau</dt><dd><span class="mono">{{ number_format($empreinte->eau_litres, 0, ',', ' ') }}</span> litres</dd></div>
+                <div><dt>Éco-score</dt><dd><x-eco-score :score="$empreinte->eco_score" /></dd></div>
+            </dl>
+        @endif
     </div>
 
     <div>
@@ -56,5 +64,27 @@
             @endforeach
         </ul>
     </div>
+</section>
+
+<section class="wrap section" id="signaler">
+    <h2>Signaler un problème</h2>
+    @if (session('status'))
+        <p class="alert" role="status">{{ session('status') }}</p>
+    @endif
+    <form method="post" action="{{ route('rates.store', $p['slug']) }}#signaler" class="rate-form">
+        @csrf
+        <label>Motif
+            <select name="motif" required>
+                @foreach (\App\Models\Rate::MOTIFS as $m)
+                    <option @selected(old('motif') === $m)>{{ $m }}</option>
+                @endforeach
+            </select>
+        </label>
+        <label>Description
+            <textarea name="description" rows="4" maxlength="2000" required>{{ old('description') }}</textarea>
+        </label>
+        @error('description') <p class="alert" role="alert">{{ $message }}</p> @enderror
+        <button class="btn">Envoyer</button>
+    </form>
 </section>
 @endsection

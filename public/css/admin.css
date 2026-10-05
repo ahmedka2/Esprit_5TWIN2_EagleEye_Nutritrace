@@ -201,3 +201,9 @@ legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Signalements */
+.statut-form { display: flex; gap: .4rem; align-items: center; }
+.statut-form select { width: auto; padding-block: .35rem; }
+.statut-form .btn { padding: .35rem .8rem; }
+.kpis dt a { color: inherit; }

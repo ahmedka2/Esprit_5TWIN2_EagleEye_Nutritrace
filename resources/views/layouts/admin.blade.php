@@ -19,6 +19,7 @@
             <nav aria-label="Administration">
                 <a href="{{ route('admin.dashboard') }}" @class(['active' => request()->routeIs('admin.dashboard')])>Tableau de bord</a>
                 <a href="{{ route('admin.produits.index') }}" @class(['active' => request()->routeIs('admin.produits.*')])>Produits</a>
+                <a href="{{ route('admin.rates.index') }}" @class(['active' => request()->routeIs('admin.rates.*')])>Signalements</a>
                 <a href="#" aria-disabled="true">Acteurs</a>
                 <a href="#" aria-disabled="true">Certifications</a>
             </nav>

@@ -11,6 +11,8 @@
     --pollen: #E8B53A;
     --pollen-ink: #7A5A12;
     --pollen-tint: #FBF1D6;
+    --score-a: #1F7A45; --score-b: #7DB65E; --score-c: #E8B53A; --score-d: #E0802E; --score-e: #C8432B;
+    --score-ink: #10241C;
     --shadow: 0 1px 2px rgb(23 51 42 / .06), 0 14px 34px -14px rgb(23 51 42 / .22);
     --display: 'Bricolage Grotesque', system-ui, sans-serif;
     --body: 'Instrument Sans', system-ui, sans-serif;
@@ -180,7 +182,9 @@ a:hover { text-decoration-thickness: 2px; }
 .card h3 a::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
 .card-lot { color: var(--moss); margin: 0 0 .35rem; }
 .card .stamps { margin-block: .6rem .9rem; }
-.card-co2 { margin: auto 0 0; padding-top: .9rem; border-top: 1px solid var(--line); font-size: .9rem; color: var(--moss); }
+.card-foot { margin-top: auto; padding-top: .9rem; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.card-co2 { margin: 0; font-size: .9rem; color: var(--moss); }
+.card-steps { display: block; margin-top: .35rem; font: 500 .66rem var(--mono); text-transform: uppercase; letter-spacing: .1em; }
 .card-co2 .mono { font-weight: 600; font-size: .95rem; color: var(--forest); background: var(--pollen-tint); padding: .1rem .45rem; border-radius: 6px; }
 .empty { padding: 2rem; border: 1.5px dashed var(--line); border-radius: 18px; max-width: 60ch; background: var(--paper); }
 
@@ -208,6 +212,24 @@ a:hover { text-decoration-thickness: 2px; }
 .co2-table .num { text-align: right; white-space: nowrap; }
 .cert-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; }
 .cert-list li { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: .75rem 1rem; }
+/* Eco-score strip: the A–E scale as printed on packs, the lot's letter raised out of it */
+.eco { display: inline-flex; align-items: center; font-size: .8rem; }
+.read-list .eco { font-size: 1.05rem; }
+.split .read-list { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.eco-cell { display: grid; place-items: center; width: 1.45em; height: 1.6em; font: 600 .82em var(--mono); background: color-mix(in srgb, var(--c) 30%, transparent); color: color-mix(in srgb, var(--c) 35%, var(--forest)); }
+.eco-cell:first-child { border-radius: .45em 0 0 .45em; }
+.eco-cell:last-child { border-radius: 0 .45em .45em 0; }
+.eco-cell.is-on { position: relative; width: 1.9em; height: 2.1em; margin-inline: -.15em; border-radius: .5em; background: var(--c); color: #fff; font: 800 1.15em var(--display); box-shadow: 0 0 0 2px var(--paper), 0 4px 10px -4px var(--c); }
+.eco-cell.is-on:is([data-l="B"], [data-l="C"]) { color: var(--score-ink); }
+.eco-cell[data-l="A"] { --c: var(--score-a); }
+.eco-cell[data-l="B"] { --c: var(--score-b); }
+.eco-cell[data-l="C"] { --c: var(--score-c); }
+.eco-cell[data-l="D"] { --c: var(--score-d); }
+.eco-cell[data-l="E"] { --c: var(--score-e); }
+.rate-form { display: grid; gap: 1rem; max-width: 56ch; }
+.rate-form label { display: grid; gap: .35rem; font-weight: 600; }
+.rate-form select, .rate-form textarea { font: 400 .95rem var(--body); padding: .6rem .8rem; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--forest); }
+.rate-form .btn { justify-self: start; }
 
 /* Footer */
 .site-footer { --contour: rgb(255 255 255 / .06); background: #17332A; color: #B7CBBE; margin-top: 3rem; overflow: hidden; }

@@ -18,6 +18,7 @@
     <div><dt>Acteurs de la chaîne</dt><dd class="mono">{{ $acteurs->count() }}</dd></div>
     <div><dt>Certifications vérifiées</dt><dd class="mono">{{ $certifs->where('statut', 'vérifié')->count() }}</dd></div>
     <div class="kpi-warn"><dt>Labels à vérifier</dt><dd class="mono">{{ $aVerifier->count() }}</dd></div>
+    <div @class(['kpi-warn' => $ratesOuverts])><dt><a href="{{ route('admin.rates.index', ['statut' => 'ouvert']) }}">Signalements ouverts</a></dt><dd class="mono">{{ $ratesOuverts }}</dd></div>
 </dl>
 
 <div class="panels">

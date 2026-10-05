@@ -35,7 +35,7 @@
         <thead>
             <tr>
                 <th scope="col">Lot</th><th scope="col">Produit</th><th scope="col">Catégorie</th>
-                <th scope="col">Labels</th><th scope="col" class="num">kg CO₂e</th><th scope="col"><span class="sr-only">Actions</span></th>
+                <th scope="col">Labels</th><th scope="col" class="num">kg CO₂e</th><th scope="col" class="num">Eau (L)</th><th scope="col">Éco-score</th><th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
@@ -50,13 +50,16 @@
                     @endforeach
                 </td>
                 <td class="num mono">{{ number_format(array_sum(array_column($p['etapes'], 'co2')), 2, ',', ' ') }}</td>
+                @php $em = $empreintes[$p['lot_id']] ?? null; @endphp
+                <td class="num mono">{{ $em ? number_format($em->eau_litres, 0, ',', ' ') : '—' }}</td>
+                <td>@if ($em)<span class="tag">{{ $em->eco_score }}</span>@else — @endif</td>
                 <td class="row-actions">
                     <a href="{{ route('produit', $p['slug']) }}">Voir</a>
                     <a href="#">Modifier</a>
                 </td>
             </tr>
         @empty
-            <tr><td colspan="6" class="empty">Aucun produit. <a href="{{ route('admin.produits.create') }}">Ajoutez le premier lot</a>.</td></tr>
+            <tr><td colspan="8" class="empty">Aucun produit. <a href="{{ route('admin.produits.create') }}">Ajoutez le premier lot</a>.</td></tr>
         @endforelse
         </tbody>
     </table>
