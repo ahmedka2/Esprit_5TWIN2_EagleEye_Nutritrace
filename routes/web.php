@@ -7,6 +7,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LivraisonController;
 use App\Http\Controllers\ProducteurController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TransformationController;
+use App\Http\Controllers\ProduitFinalController;
 use App\Http\Controllers\VehiculeController;
 use Illuminate\Support\Facades\Route;
 
@@ -76,7 +78,7 @@ if (! function_exists('produits')) {
 Route::get('/', function () {
     $q = mb_strtolower(trim(request('q', '')));
     $all = produits();
-    $found = array_filter($all, fn ($p) => str_contains(mb_strtolower($p['lot'].' '.$p['nom']), $q));
+    $found = array_filter($all, fn($p) => str_contains(mb_strtolower($p['lot'] . ' ' . $p['nom']), $q));
 
     return view('front.home', ['produits' => $found, 'hero' => $all['miel-de-lavande']]);
 })->name('home');
@@ -84,6 +86,10 @@ Route::get('/', function () {
 Route::get('/produits/{slug}', function (string $slug) {
     return view('front.produit', ['p' => produits()[$slug] ?? abort(404)]);
 })->name('produit');
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', fn() => view('admin.dashboard', ['produits' => produits()]))->name('dashboard');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -118,7 +124,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])-
     Route::get('/', fn () => view('admin.dashboard', ['produits' => produits()]))->name('dashboard');
     Route::get('/produits', function () {
         $q = mb_strtolower(trim(request('q', '')));
-        $produits = array_filter(produits(), fn ($p) => str_contains(mb_strtolower($p['lot'].' '.$p['nom']), $q)
+        $produits = array_filter(produits(), fn($p) => str_contains(mb_strtolower($p['lot'] . ' ' . $p['nom']), $q)
             && (! request('categorie') || $p['categorie'] === request('categorie'))
             && (! request('label') || in_array(request('label'), array_column($p['certifs'], 'type'))));
 
@@ -129,6 +135,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])-
     Route::resource('vehicules', VehiculeController::class);
     Route::resource('livraisons', LivraisonController::class);
 });
+
+
+
+
+
+
+Route::resource('transformations', \App\Http\Controllers\TransformationController::class);
+Route::prefix('transformations')->name('transformations.')->group(function () {
+    Route::post(
+        '/{transformation}/lancer',
+        [TransformationController::class, 'lancer']
+    )
+        ->name('lancer');
+
+    Route::post(
+        '/{transformation}/etape/{index}/terminer',
+        [TransformationController::class, 'terminerEtape']
+    )
+        ->name('etape.terminer');
+    Route::patch('/{transformation}/etapes', [TransformationController::class, 'updateEtape'])
+        ->name('etapes.update');
+    Route::post(
+        '/{transformation}/finaliser',
+        [TransformationController::class, 'finaliser']
+    )
+        ->name('finaliser');
+});
+Route::resource('produits-finaux', ProduitFinalController::class)
+    ->parameters(['produits-finaux' => 'produitFinal']);
 
 Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified', 'producteur'])->group(function () {
     Route::get('/', [ProducteurController::class, 'index'])->name('dashboard');
