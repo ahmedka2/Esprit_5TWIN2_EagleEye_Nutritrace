@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ProduitFinalController;
 use App\Http\Controllers\TransformationController;
 use Illuminate\Support\Facades\Route;
 
@@ -127,3 +128,5 @@ Route::prefix('transformations')->name('transformations.')->group(function () {
     )
         ->name('finaliser');
 });
+Route::resource('produits-finaux', ProduitFinalController::class)
+    ->parameters(['produits-finaux' => 'produitFinal']);
