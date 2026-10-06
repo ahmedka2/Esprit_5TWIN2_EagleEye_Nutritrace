@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.'.$routePrefix)
 @section('title', 'Matières premières')
 @section('actions')
     @can('create', App\Models\MatierePremiere::class)<a class="btn" href="{{ route($routePrefix.'.matieres-premieres.create') }}">Ajouter une matière</a>@endcan

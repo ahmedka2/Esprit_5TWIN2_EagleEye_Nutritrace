@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.'.$routePrefix)
 @section('title', 'Nouvelle matière première')
 @section('content')
 @if ($errors->any())<div class="form-error" role="alert">Veuillez corriger les erreurs du formulaire.</div>@endif

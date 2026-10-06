@@ -22,6 +22,7 @@ return new class extends Migration
             $table->json('etapes');
             $table->integer('etape_actuelle')->default(0);
             $table->decimal('rendement', 5, 2)->nullable();
+            $table->string('nom_produit_final')->nullable();
             $table->enum('statut', ['brouillon', 'en_cours', 'finalisee'])
                 ->default('brouillon');
 
@@ -29,7 +30,6 @@ return new class extends Migration
             $table->dateTime('date_fin')->nullable();
 
             // $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('nom_produit_final')->nullable()->after('rendement');
 
             $table->timestamps();
         });
