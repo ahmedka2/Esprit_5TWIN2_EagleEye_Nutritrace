@@ -6,6 +6,7 @@ use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -73,6 +74,15 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    public function vehicules(): HasMany
+    {
+        return $this->hasMany(Vehicule::class);
+    }
+
+    public function livraisons(): HasMany
+    {
+        return $this->hasMany(Livraison::class);
+    }
     /**
      * Check if user is an administrator.
      */

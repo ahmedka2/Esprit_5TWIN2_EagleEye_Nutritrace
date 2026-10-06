@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\LivraisonController;
+use App\Http\Controllers\VehiculeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -119,4 +121,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])-
         return view('admin.produits.index', ['produits' => $produits, 'categories' => array_unique(array_column(produits(), 'categorie'))]);
     })->name('produits.index');
     Route::get('/produits/create', fn () => view('admin.produits.form'))->name('produits.create');
+
+    Route::resource('vehicules', VehiculeController::class);
+    Route::resource('livraisons', LivraisonController::class);
 });
