@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('reference')->unique();
 
-            $table->string('matiere_premiere');             // "Tomate"
-            $table->string('unite', 10); //kg
+            $table->string('matiere_premiere');
+            $table->string('unite', 10);
 
             $table->decimal('quantite_utilisee', 10, 2);
             $table->json('etapes');
