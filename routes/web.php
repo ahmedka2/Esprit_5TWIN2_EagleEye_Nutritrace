@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\LivraisonController;
+use App\Http\Controllers\VehiculeController;
 use Illuminate\Support\Facades\Route;
 
 // ponytail: sample data until step 2 (Eloquent models Produit + Etape replace this array)
@@ -86,4 +88,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         return view('admin.produits.index', ['produits' => $produits, 'categories' => array_unique(array_column(produits(), 'categorie'))]);
     })->name('produits.index');
     Route::get('/produits/create', fn () => view('admin.produits.form'))->name('produits.create');
+
+    Route::resource('vehicules', VehiculeController::class);
+    Route::resource('livraisons', LivraisonController::class);
 });
