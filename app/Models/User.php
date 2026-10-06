@@ -2,17 +2,41 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_PRODUCTEUR = 'producteur';
+
+    public const ROLE_TRANSFORMATEUR = 'transformateur';
+
+    public const ROLE_DISTRIBUTEUR = 'distributeur';
+
+    public const ROLE_CONSOMMATEUR = 'consommateur';
+
+    /**
+     * Map of roles to human-readable French labels.
+     *
+     * @var array<string, string>
+     */
+    public const ROLES = [
+        self::ROLE_ADMIN => 'Administrateur',
+        self::ROLE_PRODUCTEUR => 'Producteur',
+        self::ROLE_TRANSFORMATEUR => 'Transformateur',
+        self::ROLE_DISTRIBUTEUR => 'Distributeur',
+        self::ROLE_CONSOMMATEUR => 'Consommateur',
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +47,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -45,6 +70,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => Role::class,
         ];
     }
 
@@ -56,5 +82,103 @@ class User extends Authenticatable
     public function livraisons(): HasMany
     {
         return $this->hasMany(Livraison::class);
+    }
+    /**
+     * Check if user is an administrator.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin || $this->role === Role::Admin->value;
+    }
+
+    /**
+     * Check if user is a producer.
+     */
+    public function isProducteur(): bool
+    {
+        return $this->role === Role::Producteur || $this->role === Role::Producteur->value;
+    }
+
+    /**
+     * Check if user is a transformer/processor.
+     */
+    public function isTransformateur(): bool
+    {
+        return $this->role === Role::Transformateur || $this->role === Role::Transformateur->value;
+    }
+
+    /**
+     * Check if user is a distributor.
+     */
+    public function isDistributeur(): bool
+    {
+        return $this->role === Role::Distributeur || $this->role === Role::Distributeur->value;
+    }
+
+    /**
+     * Check if user is a consumer.
+     */
+    public function isConsommateur(): bool
+    {
+        return $this->role === Role::Consommateur || $this->role === Role::Consommateur->value;
+    }
+
+    /**
+     * Check if user is a supply-chain pro or administrator.
+     */
+    public function isPro(): bool
+    {
+        if ($this->role instanceof Role) {
+            return $this->role->isPro();
+        }
+
+        return in_array($this->role, [
+            Role::Admin->value,
+            Role::Producteur->value,
+            Role::Transformateur->value,
+            Role::Distributeur->value,
+        ], true);
+    }
+
+    /**
+     * Check if user matches any of the given roles.
+     *
+     * @param  Role|string|array<Role|string>  $roles
+     */
+    public function hasRole(Role|string|array $roles): bool
+    {
+        $roles = is_array($roles) ? $roles : [$roles];
+        $current = $this->role instanceof Role ? $this->role->value : (string) $this->role;
+
+        foreach ($roles as $r) {
+            $val = $r instanceof Role ? $r->value : (string) $r;
+            if ($current === $val) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Human-readable label for the user's role.
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        if ($this->role instanceof Role) {
+            return $this->role->label();
+        }
+
+        return Role::tryFrom((string) $this->role)?->label()
+            ?? self::ROLES[$this->role]
+            ?? ucfirst((string) $this->role);
+    }
+
+    /**
+     * Normalize common role aliases or typos.
+     */
+    public static function normalizeRole(string $role): string
+    {
+        return Role::fromInput($role)->value;
     }
 }

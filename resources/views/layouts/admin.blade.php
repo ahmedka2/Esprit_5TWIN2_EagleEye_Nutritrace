@@ -30,7 +30,19 @@
         <div class="main">
             <header class="topbar">
                 <h1>@yield('title', 'Tableau de bord')</h1>
-                <div class="topbar-actions"><x-theme-toggle />@yield('actions')</div>
+                <div class="topbar-actions">
+                    @auth
+                        <a href="{{ route('profile.edit') }}" style="text-decoration: none;" title="Mon profil">
+                            <span class="user-name" style="font-size: .88rem; font-weight: 600; color: var(--ink-2); margin-right: .25rem;">{{ auth()->user()->name }} <span class="tag" style="margin-left: .25rem; font-size: .75rem;">{{ auth()->user()->role_label }}</span></span>
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}" style="display:inline-block; margin-right: .5rem;">
+                            @csrf
+                            <button type="submit" class="btn btn-ghost" style="padding: .4rem .85rem; font-size: .82rem;">Déconnexion</button>
+                        </form>
+                    @endauth
+                    <x-theme-toggle />
+                    @yield('actions')
+                </div>
             </header>
 
             <main id="contenu" class="content">

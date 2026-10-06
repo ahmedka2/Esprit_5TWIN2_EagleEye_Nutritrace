@@ -26,13 +26,38 @@
             <nav aria-label="Principale">
                 <a href="{{ route('home') }}#produits">Produits</a>
                 <a href="{{ route('home') }}#lire">Lire une fiche</a>
-                <a href="{{ route('admin.dashboard') }}" class="nav-pro">Espace pro</a>
+                @auth
+                    <a href="{{ route('profile.edit') }}" class="nav-user" style="text-decoration: none;" title="Mon profil">
+                        {{ auth()->user()->name }} <small>({{ auth()->user()->role_label }})</small>
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}" class="inline-form">
+                        @csrf
+                        <button type="submit" class="nav-link-btn">Déconnexion</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" @class(['active' => request()->routeIs('login')])>Connexion</a>
+                    <a href="{{ route('register') }}" @class(['active' => request()->routeIs('register')])>Inscription</a>
+                @endauth
                 <x-theme-toggle />
             </nav>
         </div>
     </header>
 
     <main id="contenu">
+        @if (session('error'))
+            <div class="wrap" style="padding-top: 1.5rem;">
+                <p class="alert" role="alert" style="background: var(--error-tint); color: var(--error-ink); box-shadow: inset 4px 0 0 var(--error-ink);">
+                    {{ session('error') }}
+                </p>
+            </div>
+        @endif
+        @if (session('status'))
+            <div class="wrap" style="padding-top: 1.5rem;">
+                <p class="alert" role="status">
+                    {{ session('status') }}
+                </p>
+            </div>
+        @endif
         @yield('content')
     </main>
 
