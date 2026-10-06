@@ -83,6 +83,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Livraison::class);
     }
+
     /**
      * Check if user is an administrator.
      */
@@ -121,6 +122,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isConsommateur(): bool
     {
         return $this->role === Role::Consommateur || $this->role === Role::Consommateur->value;
+    }
+
+    public function matieresPremieres(): HasMany
+    {
+        return $this->hasMany(MatierePremiere::class, 'producteur_id');
     }
 
     /**
