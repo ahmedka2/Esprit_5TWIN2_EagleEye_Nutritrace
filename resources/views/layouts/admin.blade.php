@@ -19,6 +19,8 @@
             <nav aria-label="Administration">
                 <a href="{{ route('admin.dashboard') }}" @class(['active' => request()->routeIs('admin.dashboard')])>Tableau de bord</a>
                 <a href="{{ route('admin.produits.index') }}" @class(['active' => request()->routeIs('admin.produits.*')])>Produits</a>
+                <a href="{{ route('admin.vehicules.index') }}" @class(['active' => request()->routeIs('admin.vehicules.*')])>Véhicules</a>
+                <a href="{{ route('admin.livraisons.index') }}" @class(['active' => request()->routeIs('admin.livraisons.*')])>Livraisons</a>
                 <a href="#" aria-disabled="true">Acteurs</a>
                 @if (auth()->user()?->isAdmin())
                     <a href="{{ route('admin.certifications.index') }}" @class(['active' => request()->routeIs('admin.certifications.*')])>Certifications</a>

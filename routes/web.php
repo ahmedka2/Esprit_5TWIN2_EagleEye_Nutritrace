@@ -4,8 +4,10 @@ use App\Http\Controllers\Admin\CategorieController;
 use App\Http\Controllers\Admin\CertificationController;
 use App\Http\Controllers\Admin\MatierePremiereController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\LivraisonController;
 use App\Http\Controllers\ProducteurController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehiculeController;
 use Illuminate\Support\Facades\Route;
 
 // ponytail: sample data until step 2 (Eloquent models Produit + Etape replace this array)
@@ -124,6 +126,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])-
     })->name('produits.index');
     Route::get('/produits/create', fn () => view('admin.produits.form'))->name('produits.create');
 
+    Route::resource('vehicules', VehiculeController::class);
+    Route::resource('livraisons', LivraisonController::class);
 });
 
 Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified', 'producteur'])->group(function () {
