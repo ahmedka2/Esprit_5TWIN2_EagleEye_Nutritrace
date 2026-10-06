@@ -19,7 +19,7 @@
 
             <form class="lookup" action="{{ route('home') }}" method="get" role="search">
                 <label for="q" class="sr-only">Code lot ou nom du produit</label>
-                <input id="q" name="q" type="search" placeholder="Code lot, ex. NT-2026-0413" value="{{ request('q') }}">
+                <input id="q" name="q" type="search" placeholder="Code lot, ex. PF-2026-001" value="{{ request('q') }}">
                 <button type="submit">Tracer</button>
             </form>
 

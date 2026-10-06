@@ -27,6 +27,7 @@ break;
 }
 
 $enCours = $transformation->statut === 'en_cours';
+$empreintes = $transformation->empreintes->keyBy('etape');
 @endphp
 
 @if (session('success')) <p class="flash" role="status">{{ session('success') }}</p> @endif
@@ -119,10 +120,22 @@ $enCours = $transformation->statut === 'en_cours';
                     </span>
                 </div>
 
+                @if ($em = $empreintes[$i] ?? null)
+                <p class="muted small mono">{{ number_format($em->co2_kg, 2, ',', ' ') }} kg CO₂e · {{ number_format($em->eau_litres, 0, ',', ' ') }} L d’eau</p>
+                @endif
+
                 @if ($courant)
                 <form action="{{ route('transformations.etape.terminer', [$transformation, $i]) }}"
                     method="POST" class="step-action" data-async-form>
                     @csrf
+                    <label>Carbone (kg CO₂e)
+                        <input name="co2_kg" class="mono" type="number" min="0" step="0.01" value="{{ old('co2_kg') }}" required @error('co2_kg') aria-invalid="true" @enderror>
+                        @error('co2_kg') <span class="field-error">{{ $message }}</span> @enderror
+                    </label>
+                    <label>Eau (litres)
+                        <input name="eau_litres" class="mono" type="number" min="0" step="0.01" value="{{ old('eau_litres') }}" required @error('eau_litres') aria-invalid="true" @enderror>
+                        @error('eau_litres') <span class="field-error">{{ $message }}</span> @enderror
+                    </label>
                     <button class="btn" type="submit">Terminer cette étape</button>
                 </form>
                 @endif

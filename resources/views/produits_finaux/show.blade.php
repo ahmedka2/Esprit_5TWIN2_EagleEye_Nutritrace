@@ -43,6 +43,24 @@
         @endif
     </section>
 
+    @php $empreinte = $produitFinal->empreinte(); @endphp
+    <section class="panel">
+        <div class="panel-head">
+            <h2>Empreinte environnementale</h2>
+            @if ($empreinte) <x-eco-score :score="$empreinte['eco_score']" /> @endif
+        </div>
+        @if ($empreinte)
+            <dl class="detail-grid">
+                <div><dt>Carbone total</dt><dd class="mono">{{ number_format($empreinte['co2_kg'], 2, ',', ' ') }} kg CO₂e</dd></div>
+                <div><dt>Par {{ $produitFinal->unite }}</dt><dd class="mono">{{ number_format($empreinte['co2_par_unite'], 2, ',', ' ') }} kg CO₂e</dd></div>
+                <div><dt>Eau totale</dt><dd class="mono">{{ number_format($empreinte['eau_litres'], 0, ',', ' ') }} L</dd></div>
+            </dl>
+            <p class="muted small">Calculée à partir des étapes de la transformation. <a href="{{ route('produit', $produitFinal) }}">Voir la page publique</a></p>
+        @else
+            <p class="muted">Aucune étape de la transformation n’a d’empreinte renseignée.</p>
+        @endif
+    </section>
+
     @if ($produitFinal->peutEtreSupprime())
         <form action="{{ route('produits-finaux.destroy', $produitFinal) }}" method="POST" onsubmit="return confirm('Supprimer ce produit fini ?')">
             @csrf

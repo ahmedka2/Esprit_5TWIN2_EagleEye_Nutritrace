@@ -18,11 +18,11 @@
             <a class="wordmark" href="{{ route('admin.dashboard') }}">Nutri<span>Trace</span> <small>Pro</small></a>
             <nav aria-label="Administration">
                 <a href="{{ route('admin.dashboard') }}" @class(['active' => request()->routeIs('admin.dashboard')])>Tableau de bord</a>
-                <a href="{{ route('admin.produits.index') }}" @class(['active' => request()->routeIs('admin.produits.*')])>Produits</a>
-                <a href="{{ route('transformations.index') }}" @class(['active' => request()->routeIs('transformations.*')])><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h13l-3-3m6 13H7l3 3"/><path d="M17 7a6 6 0 0 1 0 10M7 17A6 6 0 0 1 7 7"/></svg> Transformations</a>
-                <a href="{{ route('produits-finaux.index') }}" @class(['active' => request()->routeIs('produits-finaux.*')])><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9"/></svg> Produits finis</a>
+                <a href="{{ route('transformations.index') }}" @class(['active' => request()->routeIs('transformations.*')])>Transformations</a>
+                <a href="{{ route('produits-finaux.index') }}" @class(['active' => request()->routeIs('produits-finaux.*')])>Produits finis</a>
                 <a href="{{ route('admin.vehicules.index') }}" @class(['active' => request()->routeIs('admin.vehicules.*')])>Véhicules</a>
                 <a href="{{ route('admin.livraisons.index') }}" @class(['active' => request()->routeIs('admin.livraisons.*')])>Livraisons</a>
+                <a href="{{ route('admin.rates.index') }}" @class(['active' => request()->routeIs('admin.rates.*')])>Signalements</a>
                 <a href="#" aria-disabled="true">Acteurs</a>
                 @if (auth()->user()?->isAdmin())
                     <a href="{{ route('admin.certifications.index') }}" @class(['active' => request()->routeIs('admin.certifications.*')])>Certifications</a>

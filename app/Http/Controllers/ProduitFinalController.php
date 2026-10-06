@@ -11,7 +11,7 @@ class ProduitFinalController extends Controller
     //
     public function index()
     {
-        $produits = ProduitFinal::with('transformation')
+        $produits = ProduitFinal::with('transformation.empreintes')
             ->latest()
             ->paginate(10);
 

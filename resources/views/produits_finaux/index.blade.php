@@ -19,6 +19,7 @@
                 <th scope="col">Quantité</th>
                 <th scope="col">Production</th>
                 <th scope="col">Statut</th>
+                <th scope="col">Éco-score</th>
                 <th scope="col" class="row-actions">Actions</th>
             </tr></thead>
             <tbody>
@@ -40,13 +41,14 @@
                     <td>{{ $produitFinal->quantite }} {{ $produitFinal->unite }}</td>
                     <td>{{ $produitFinal->date_production?->format('d/m/Y') ?? '—' }}</td>
                     <td><span class="tag {{ $produitFinal->statut !== 'disponible' ? 'tag-warn' : '' }}">{{ match ($produitFinal->statut) { 'disponible' => 'Disponible', 'reserve' => 'Réservé', 'expedie' => 'Expédié', default => ucfirst($produitFinal->statut) } }}</span></td>
+                    <td>{{ $produitFinal->empreinte()['eco_score'] ?? '—' }}</td>
                     <td class="row-actions">
                         <a href="{{ route('produits-finaux.show', $produitFinal) }}"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg> Détails</a>
                         <a href="{{ route('produits-finaux.edit', $produitFinal) }}"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L20 7.5 16.5 4 4 16.5Z"/><path d="m14.8 5.7 3.5 3.5"/></svg> Modifier</a>
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="empty">Aucun produit fini enregistré.</td></tr>
+                <tr><td colspan="8" class="empty">Aucun produit fini enregistré.</td></tr>
             @endforelse
             </tbody>
         </table>

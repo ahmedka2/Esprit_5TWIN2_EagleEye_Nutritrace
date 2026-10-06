@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Transformation extends Model
@@ -34,6 +35,11 @@ class Transformation extends Model
     public function produitFinal(): HasOne
     {
         return $this->hasOne(ProduitFinal::class, 'transformation_id');
+    }
+
+    public function empreintes(): HasMany
+    {
+        return $this->hasMany(EmpreinteEnvironnementale::class)->orderBy('etape');
     }
 
     public function matierePremiere(): BelongsTo

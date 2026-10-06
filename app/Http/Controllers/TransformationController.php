@@ -172,7 +172,7 @@ class TransformationController extends Controller
         return back()->with('success', 'Transformation lancée.');
     }
 
-    public function terminerEtape(Transformation $transformation, int $index)
+    public function terminerEtape(Request $request, Transformation $transformation, int $index)
     {
         if ($transformation->statut !== 'en_cours') {
             return back()->with('error', 'La transformation n\'est pas en cours.');
@@ -187,6 +187,12 @@ class TransformationController extends Controller
         if ($etapes[$index]['statut'] !== 'en_cours') {
             return back()->with('error', 'Cette étape ne peut pas être terminée.');
         }
+
+        $empreinte = $request->validate([
+            'co2_kg' => ['required', 'numeric', 'min:0'],
+            'eau_litres' => ['required', 'numeric', 'min:0'],
+        ]);
+        $transformation->empreintes()->updateOrCreate(['etape' => $index], $empreinte);
 
         // Terminer l'étape actuelle
         $etapes[$index]['statut'] = 'terminee';
