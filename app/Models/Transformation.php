@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Transformation extends Model
 {
@@ -26,6 +27,11 @@ class Transformation extends Model
         'rendement' => 'decimal:2',
         'quantite_utilisee' => 'decimal:2',
     ];
+
+    public function produitFinal(): HasOne
+    {
+        return $this->hasOne(ProduitFinal::class, 'transformation_id');
+    }
 
     public function toutesEtapesCompletes(): bool
     {
