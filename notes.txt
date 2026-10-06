@@ -1,0 +1,7 @@
+php artisan make:migration create_transformations_table
+
+php artisan migrate
+
+php artisan make:model Transformation -cr
+
+php artisan key:generate
