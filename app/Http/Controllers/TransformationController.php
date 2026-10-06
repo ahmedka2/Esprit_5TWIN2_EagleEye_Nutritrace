@@ -39,7 +39,7 @@ class TransformationController extends Controller
             'quantite_utilisee' => 'required|numeric|min:0.01',
             'etapes'            => 'required|array|min:1',
             'etapes.*'          => 'string',
-        ]);
+        ], $this->messagesValidation());
         $etapes = collect($validated['etapes'])
             ->values()
             ->map(fn($e, $i) => [
@@ -103,7 +103,7 @@ class TransformationController extends Controller
             'quantite_utilisee' => 'required|numeric|min:0.01',
             'etapes'            => 'required|array|min:1',
             'etapes.*'          => 'string',
-        ]);
+        ], $this->messagesValidation());
         $etapes = collect($validated['etapes'])
             ->values()
             ->map(fn($e, $i) => [
@@ -216,5 +216,24 @@ class TransformationController extends Controller
         ]);
 
         return back()->with('success', 'Transformation finalisée.');
+    }
+
+    private function messagesValidation(): array
+    {
+        return [
+            'matiere_premiere.required' => 'Saisis le nom de la matière première.',
+            'matiere_premiere.string' => 'La matière première doit être un texte.',
+            'matiere_premiere.max' => 'La matière première ne doit pas dépasser 255 caractères.',
+            'unite.required' => 'Saisis l’unité de mesure.',
+            'unite.string' => 'L’unité de mesure doit être un texte.',
+            'unite.max' => 'L’unité ne doit pas dépasser 10 caractères.',
+            'quantite_utilisee.required' => 'Saisis la quantité utilisée.',
+            'quantite_utilisee.numeric' => 'La quantité doit être un nombre.',
+            'quantite_utilisee.min' => 'La quantité doit être supérieure à 0.',
+            'etapes.required' => 'Choisis au moins une étape.',
+            'etapes.array' => 'La liste des étapes est invalide.',
+            'etapes.min' => 'Choisis au moins une étape.',
+            'etapes.*.string' => 'Une étape sélectionnée est invalide.',
+        ];
     }
 }

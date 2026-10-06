@@ -7,12 +7,10 @@
 
 @php($selectedSteps = old('etapes', []))
 
-<form class="form" action="{{ route('transformations.store') }}" method="POST">
+<form class="form" action="{{ route('transformations.store') }}" method="POST" novalidate>
     @csrf
 
-    @if ($errors->any())
-        <div class="form-error" role="alert">Corrige les champs signalés avant d'enregistrer.</div>
-    @endif
+    
 
     {{-- ==================== MATIÈRE PREMIÈRE ==================== --}}
     <fieldset class="panel">
@@ -20,15 +18,18 @@
         <div class="fields">
             <label>Matière première *
                 <input name="matiere_premiere" value="{{ old('matiere_premiere') }}"
-                       maxlength="255" required>
+                       maxlength="255" required @error('matiere_premiere') aria-invalid="true" aria-describedby="matiere-error" @enderror>
+                @error('matiere_premiere')<span class="field-error" id="matiere-error">{{ $message }}</span>@enderror
             </label>
             <label>Quantité utilisée *
                 <div class="quantity-fields">
                     <input type="number" name="quantite_utilisee" min="0.01" step="0.01"
-                           value="{{ old('quantite_utilisee') }}" required>
+                           value="{{ old('quantite_utilisee') }}" required @error('quantite_utilisee') aria-invalid="true" aria-describedby="quantite-error" @enderror>
                     <input name="unite" maxlength="10"
-                           value="{{ old('unite', 'kg') }}" required>
+                           value="{{ old('unite', 'kg') }}" required @error('unite') aria-invalid="true" aria-describedby="unite-error" @enderror>
                 </div>
+                @error('quantite_utilisee')<span class="field-error" id="quantite-error">{{ $message }}</span>@enderror
+                @error('unite')<span class="field-error" id="unite-error">{{ $message }}</span>@enderror
             </label>
         </div>
     </fieldset>
@@ -49,6 +50,10 @@
                 </label>
             @endforeach
         </div>
+        @error('etapes')<span class="field-error" role="alert">{{ $message }}</span>@enderror
+        @foreach ($errors->getMessages() as $key => $messages)
+            @if (str_starts_with($key, 'etapes.'))<span class="field-error" role="alert">{{ $messages[0] }}</span>@endif
+        @endforeach
     </fieldset>
 
     {{-- ==================== PROCESSUS (KANBAN UNIQUE) ==================== --}}

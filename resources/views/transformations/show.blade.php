@@ -141,14 +141,14 @@ $enCours = $transformation->statut === 'en_cours';
 
     @if ($transformation->rendement === null)
     <form action="{{ route('transformations.finaliser', $transformation) }}"
-        method="POST" class="yield-form" data-async-form>
+        method="POST" class="yield-form" data-async-form novalidate>
         @csrf
         <label>Saisir le rendement obtenu *
             <input type="number" name="rendement"
-                min="0.01" max="100" step="0.01" value="{{ old('rendement', $transformation->rendement) }}" required>
+                min="0.01" max="100" step="0.01" value="{{ old('rendement', $transformation->rendement) }}" required @error('rendement') aria-invalid="true" aria-describedby="rendement-error" @enderror>
             <span>%</span>
         </label>
-        @error('rendement')<span class="field-error" role="alert">{{ $message }}</span>@enderror
+        @error('rendement')<span class="field-error" id="rendement-error" role="alert">{{ $message }}</span>@enderror
         <button class="btn" type="submit">
             Finaliser la transformation
         </button>

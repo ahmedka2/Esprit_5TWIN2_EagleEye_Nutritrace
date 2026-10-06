@@ -7,9 +7,7 @@
 @endsection
 
 @section('content')
-    @if ($errors->any())
-        <div class="form-error" role="alert">Corrige les champs signalés avant d’enregistrer.</div>
-    @endif
+
 
     @if ($transformations->isEmpty())
         <section class="panel">
@@ -18,13 +16,13 @@
             <a class="btn btn-ghost" href="{{ route('produits-finaux.index') }}">Retour aux produits finis</a>
         </section>
     @else
-        <form class="form" action="{{ route('produits-finaux.store') }}" method="POST">
+        <form class="form" action="{{ route('produits-finaux.store') }}" method="POST" novalidate>
             @csrf
 
             <fieldset class="panel">
                 <legend>Transformation source</legend>
                 <label>Transformation finalisée <span aria-hidden="true">*</span>
-                    <select name="transformation_id" required @error('transformation_id') aria-invalid="true" @enderror>
+                    <select name="transformation_id" required @error('transformation_id') aria-describedby="transformation-id-error" aria-invalid="true" @enderror>
                         <option value="">Choisir une transformation…</option>
                         @foreach ($transformations as $transformation)
                             <option value="{{ $transformation->id }}" @selected((string) old('transformation_id') === (string) $transformation->id)>
@@ -32,7 +30,7 @@
                             </option>
                         @endforeach
                     </select>
-                    @error('transformation_id')<span class="field-error">{{ $message }}</span>@enderror
+                    @error('transformation_id')<span class="field-error" id="transformation-id-error">{{ $message }}</span>@enderror
                 </label>
             </fieldset>
 
@@ -40,24 +38,24 @@
                 <legend>Produit et lot</legend>
                 <div class="fields">
                     <label>Nom du produit <span aria-hidden="true">*</span>
-                        <input name="nom" value="{{ old('nom') }}" maxlength="255" required @error('nom') aria-invalid="true" @enderror>
-                        @error('nom')<span class="field-error">{{ $message }}</span>@enderror
+                        <input name="nom" value="{{ old('nom') }}" maxlength="255" required @error('nom') aria-describedby="nom-error" aria-invalid="true" @enderror>
+                        @error('nom')<span class="field-error" id="nom-error">{{ $message }}</span>@enderror
                     </label>
                     <label>Quantité produite <span aria-hidden="true">*</span>
                         <div class="quantity-fields">
-                            <input type="number" name="quantite" min="0.01" step="0.01" value="{{ old('quantite') }}" required aria-label="Quantité produite" @error('quantite') aria-invalid="true" @enderror>
-                            <input name="unite" maxlength="10" value="{{ old('unite', 'kg') }}" required aria-label="Unité de quantité">
+                            <input type="number" name="quantite" min="0.01" step="0.01" value="{{ old('quantite') }}" required aria-label="Quantité produite" @error('quantite') aria-describedby="quantite-error" aria-invalid="true" @enderror>
+                            <input name="unite" maxlength="10" value="{{ old('unite', 'kg') }}" required aria-label="Unité de quantité" @error('unite') aria-describedby="unite-error" aria-invalid="true" @enderror>
                         </div>
-                        @error('quantite')<span class="field-error">{{ $message }}</span>@enderror
-                        @error('unite')<span class="field-error">{{ $message }}</span>@enderror
+                        @error('quantite')<span class="field-error" id="quantite-error">{{ $message }}</span>@enderror
+                        @error('unite')<span class="field-error" id="unite-error">{{ $message }}</span>@enderror
                     </label>
                     <label>Date de production <span aria-hidden="true">*</span>
-                        <input type="date" name="date_production" value="{{ old('date_production', now()->toDateString()) }}" required @error('date_production') aria-invalid="true" @enderror>
-                        @error('date_production')<span class="field-error">{{ $message }}</span>@enderror
+                        <input type="date" name="date_production" value="{{ old('date_production', now()->toDateString()) }}" required @error('date_production') aria-describedby="date-production-error" aria-invalid="true" @enderror>
+                        @error('date_production')<span class="field-error" id="date-production-error">{{ $message }}</span>@enderror
                     </label>
                     <label>Date de péremption
-                        <input type="date" name="date_peremption" value="{{ old('date_peremption') }}" @error('date_peremption') aria-invalid="true" @enderror>
-                        @error('date_peremption')<span class="field-error">{{ $message }}</span>@enderror
+                        <input type="date" name="date_peremption" value="{{ old('date_peremption') }}" @error('date_peremption') aria-describedby="date-peremption-error" aria-invalid="true" @enderror>
+                        @error('date_peremption')<span class="field-error" id="date-peremption-error">{{ $message }}</span>@enderror
                     </label>
                 </div>
                 <p class="hint">Le code du produit est généré automatiquement et son statut initial est « disponible ».</p>

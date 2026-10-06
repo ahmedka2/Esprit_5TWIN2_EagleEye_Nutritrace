@@ -15,12 +15,15 @@
     $selectedSteps = is_array($selectedSteps) ? array_values($selectedSteps) : [];
 @endphp
 
-<form class="form" action="{{ route('transformations.update', $transformation) }}" method="POST">
+<form class="form" action="{{ route('transformations.update', $transformation) }}" method="POST" novalidate>
     @csrf
     @method('PUT')
 
     @if ($errors->any())
-        <div class="form-error" role="alert">Corrige les champs signalés avant d'enregistrer.</div>
+        <div class="form-error" role="alert">
+            <p>Les modifications n’ont pas été enregistrées. Vérifie les champs signalés :</p>
+            <ul>@foreach ($errors->all() as $message)<li>{{ $message }}</li>@endforeach</ul>
+        </div>
     @endif
 
     {{-- MATIÈRE PREMIÈRE --}}
@@ -30,16 +33,19 @@
             <label>Matière première *
                 <input name="matiere_premiere"
                        value="{{ old('matiere_premiere', $transformation->matiere_premiere) }}"
-                       maxlength="255" required>
+                       maxlength="255" required @error('matiere_premiere') aria-invalid="true" aria-describedby="matiere-error" @enderror>
+                @error('matiere_premiere')<span class="field-error" id="matiere-error">{{ $message }}</span>@enderror
             </label>
             <label>Quantité utilisée *
                 <div class="quantity-fields">
                     <input type="number" name="quantite_utilisee" min="0.01" step="0.01"
                            value="{{ old('quantite_utilisee', $transformation->quantite_utilisee) }}"
-                           required>
+                           required @error('quantite_utilisee') aria-invalid="true" aria-describedby="quantite-error" @enderror>
                     <input name="unite" maxlength="10"
-                           value="{{ old('unite', $transformation->unite) }}" required>
+                           value="{{ old('unite', $transformation->unite) }}" required @error('unite') aria-invalid="true" aria-describedby="unite-error" @enderror>
                 </div>
+                @error('quantite_utilisee')<span class="field-error" id="quantite-error">{{ $message }}</span>@enderror
+                @error('unite')<span class="field-error" id="unite-error">{{ $message }}</span>@enderror
             </label>
         </div>
     </fieldset>
@@ -61,6 +67,10 @@
                 </label>
             @endforeach
         </div>
+        @error('etapes')<span class="field-error" role="alert">{{ $message }}</span>@enderror
+        @foreach ($errors->getMessages() as $key => $messages)
+            @if (str_starts_with($key, 'etapes.'))<span class="field-error" role="alert">{{ $messages[0] }}</span>@endif
+        @endforeach
     </fieldset>
 
     {{-- PROCESSUS --}}
