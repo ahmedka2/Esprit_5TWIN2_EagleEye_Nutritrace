@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Transformation extends Model
@@ -10,6 +11,7 @@ class Transformation extends Model
     //
     protected $fillable = [
         'reference',
+        'matiere_premiere_id',
         'matiere_premiere',
         'unite',
         'quantite_utilisee',
@@ -32,6 +34,11 @@ class Transformation extends Model
     public function produitFinal(): HasOne
     {
         return $this->hasOne(ProduitFinal::class, 'transformation_id');
+    }
+
+    public function matierePremiere(): BelongsTo
+    {
+        return $this->belongsTo(MatierePremiere::class, 'matiere_premiere_id');
     }
 
     public function toutesEtapesCompletes(): bool

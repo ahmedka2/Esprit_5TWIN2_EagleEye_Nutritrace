@@ -13,6 +13,7 @@
         collect($transformation->etapes ?? [])->pluck('nom')->all()
     );
     $selectedSteps = is_array($selectedSteps) ? array_values($selectedSteps) : [];
+    $selectedMatierePremiereId = old('matiere_premiere_id', $transformation->matiere_premiere_id ?? $matieresPremieres->firstWhere('name', $transformation->matiere_premiere)?->id);
 @endphp
 
 <form class="form" action="{{ route('transformations.update', $transformation) }}" method="POST" novalidate>
@@ -31,10 +32,15 @@
         <legend>Matière première</legend>
         <div class="fields">
             <label>Matière première *
-                <input name="matiere_premiere"
-                       value="{{ old('matiere_premiere', $transformation->matiere_premiere) }}"
-                       maxlength="255" required @error('matiere_premiere') aria-invalid="true" aria-describedby="matiere-error" @enderror>
-                @error('matiere_premiere')<span class="field-error" id="matiere-error">{{ $message }}</span>@enderror
+                <select name="matiere_premiere_id" required @error('matiere_premiere_id') aria-invalid="true" aria-describedby="matiere-error" @enderror>
+                    <option value="">Choisir une matière première</option>
+                    @foreach ($matieresPremieres as $matiere)
+                        <option value="{{ $matiere->id }}" data-unite="{{ $matiere->unite }}" @selected((string) $selectedMatierePremiereId === (string) $matiere->id)>
+                            {{ $matiere->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('matiere_premiere_id')<span class="field-error" id="matiere-error">{{ $message }}</span>@enderror
             </label>
             <label>Quantité utilisée *
                 <div class="quantity-fields">
@@ -94,6 +100,17 @@
         <button class="btn" type="submit">Enregistrer les modifications</button>
     </div>
 </form>
+
+<script>
+(() => {
+    const select = document.querySelector('select[name="matiere_premiere_id"]');
+    const unite = document.querySelector('input[name="unite"]');
+    select?.addEventListener('change', () => {
+        const selected = select.selectedOptions[0];
+        if (selected?.dataset.unite) unite.value = selected.dataset.unite;
+    });
+})();
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>

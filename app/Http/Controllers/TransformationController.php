@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transformation;
+use App\Models\MatierePremiere;
 use Illuminate\Http\Request;
 
 class TransformationController extends Controller
@@ -22,9 +23,11 @@ class TransformationController extends Controller
      */
     public function create()
     {
-        //
+        $matieresPremieres = MatierePremiere::query()
+            ->orderBy('name')
+            ->get();
         $etapes = \App\Enums\EtapeTransformation::options();
-        return view('transformations.create', compact('etapes'));
+        return view('transformations.create', compact('etapes', 'matieresPremieres'));
     }
 
     /**
@@ -34,7 +37,7 @@ class TransformationController extends Controller
     {
         //
         $validated = $request->validate([
-            'matiere_premiere'  => 'required|string|max:255',
+            'matiere_premiere_id' => 'required|integer|exists:matieres_premieres,id',
             'unite'             => 'required|string|max:10',
             'quantite_utilisee' => 'required|numeric|min:0.01',
             'etapes'            => 'required|array|min:1',
@@ -48,10 +51,12 @@ class TransformationController extends Controller
                 'statut' => 'en_attente',
             ])
             ->toArray();
+        $matierePremiere = MatierePremiere::findOrFail($validated['matiere_premiere_id']);
 
         Transformation::create([
             'reference'         => Transformation::genererReference(),
-            'matiere_premiere'  => $validated['matiere_premiere'],
+            'matiere_premiere_id' => $matierePremiere->id,
+            'matiere_premiere'  => $matierePremiere->name,
             'unite'             => $validated['unite'],
             'quantite_utilisee' => $validated['quantite_utilisee'],
             'etapes'            => $etapes,
@@ -82,8 +87,11 @@ class TransformationController extends Controller
                 ->route('transformations.index')
                 ->with('error', 'Seules les transformations en brouillon sont modifiables.');
         }
+        $matieresPremieres = MatierePremiere::query()
+            ->orderBy('name')
+            ->get();
         $etapes = \App\Enums\EtapeTransformation::options();
-        return view('transformations.edit', compact('transformation', 'etapes'));
+        return view('transformations.edit', compact('transformation', 'etapes', 'matieresPremieres'));
     }
 
     /**
@@ -98,7 +106,7 @@ class TransformationController extends Controller
                 ->with('error', 'Seules les transformations en brouillon sont modifiables.');
         }
         $validated = $request->validate([
-            'matiere_premiere'  => 'required|string|max:255',
+            'matiere_premiere_id' => 'required|integer|exists:matieres_premieres,id',
             'unite'             => 'required|string|max:10',
             'quantite_utilisee' => 'required|numeric|min:0.01',
             'etapes'            => 'required|array|min:1',
@@ -112,8 +120,10 @@ class TransformationController extends Controller
                 'statut' => 'en_attente',
             ])
             ->toArray();
+        $matierePremiere = MatierePremiere::findOrFail($validated['matiere_premiere_id']);
         $transformation->update([
-            'matiere_premiere'  => $validated['matiere_premiere'],
+            'matiere_premiere_id' => $matierePremiere->id,
+            'matiere_premiere'  => $matierePremiere->name,
             'unite'             => $validated['unite'],
             'quantite_utilisee' => $validated['quantite_utilisee'],
             'etapes'            => $etapes,
@@ -225,9 +235,8 @@ class TransformationController extends Controller
     private function messagesValidation(): array
     {
         return [
-            'matiere_premiere.required' => 'Saisis le nom de la matière première.',
-            'matiere_premiere.string' => 'La matière première doit être un texte.',
-            'matiere_premiere.max' => 'La matière première ne doit pas dépasser 255 caractères.',
+            'matiere_premiere_id.required' => 'Sélectionne une matière première.',
+            'matiere_premiere_id.exists' => 'La matière première sélectionnée n’existe pas.',
             'unite.required' => 'Saisis l’unité de mesure.',
             'unite.string' => 'L’unité de mesure doit être un texte.',
             'unite.max' => 'L’unité ne doit pas dépasser 10 caractères.',

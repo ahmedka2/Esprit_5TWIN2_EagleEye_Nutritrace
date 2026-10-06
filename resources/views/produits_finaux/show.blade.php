@@ -47,7 +47,7 @@
         <form action="{{ route('produits-finaux.destroy', $produitFinal) }}" method="POST" onsubmit="return confirm('Supprimer ce produit fini ?')">
             @csrf
             @method('DELETE')
-            <button class="btn btn-danger" type="submit">Supprimer le produit fini</button>
+            <button class="btn btn-danger" type="submit"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg> Supprimer le produit fini</button>
         </form>
     @endif
 @endsection

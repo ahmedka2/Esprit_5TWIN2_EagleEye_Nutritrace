@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MatierePremiere extends Model
 {
@@ -27,6 +28,11 @@ class MatierePremiere extends Model
     public function categorie(): BelongsTo
     {
         return $this->belongsTo(Categorie::class);
+    }
+
+    public function transformations(): HasMany
+    {
+        return $this->hasMany(Transformation::class, 'matiere_premiere_id');
     }
 
     public function producteur(): BelongsTo
