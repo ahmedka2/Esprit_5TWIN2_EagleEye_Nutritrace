@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsPro;
+use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureUserIsProducteur;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'pro' => EnsureUserIsPro::class,
+            'admin' => EnsureUserIsAdmin::class,
+            'producteur' => EnsureUserIsProducteur::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

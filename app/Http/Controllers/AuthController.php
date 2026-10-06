@@ -46,7 +46,9 @@ class AuthController extends Controller
 
             /** @var User $user */
             $user = Auth::user();
-            $defaultTarget = $user->isPro() ? route('admin.dashboard') : route('home');
+            $defaultTarget = $user->isProducteur()
+                ? route('producteur.dashboard')
+                : ($user->isPro() ? route('admin.dashboard') : route('home'));
 
             return redirect()->intended($defaultTarget);
         }
@@ -158,7 +160,9 @@ class AuthController extends Controller
     public function showVerifyEmail(Request $request): View|RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            $target = $request->user()->isPro() ? route('admin.dashboard') : route('home');
+            $target = $request->user()->isProducteur()
+                ? route('producteur.dashboard')
+                : ($request->user()->isPro() ? route('admin.dashboard') : route('home'));
 
             return redirect()->intended($target);
         }
@@ -180,7 +184,9 @@ class AuthController extends Controller
         }
 
         if ($request->user()->hasVerifiedEmail()) {
-            $target = $request->user()->isPro() ? route('admin.dashboard') : route('home');
+            $target = $request->user()->isProducteur()
+                ? route('producteur.dashboard')
+                : ($request->user()->isPro() ? route('admin.dashboard') : route('home'));
 
             return redirect()->intended($target.'?verified=1');
         }
@@ -189,7 +195,9 @@ class AuthController extends Controller
             event(new Verified($request->user()));
         }
 
-        $target = $request->user()->isPro() ? route('admin.dashboard') : route('home');
+        $target = $request->user()->isProducteur()
+            ? route('producteur.dashboard')
+            : ($request->user()->isPro() ? route('admin.dashboard') : route('home'));
 
         return redirect()->intended($target.'?verified=1')
             ->with('status', 'Votre adresse email a été confirmée avec succès !');
@@ -201,7 +209,9 @@ class AuthController extends Controller
     public function resendVerification(Request $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            $target = $request->user()->isPro() ? route('admin.dashboard') : route('home');
+            $target = $request->user()->isProducteur()
+                ? route('producteur.dashboard')
+                : ($request->user()->isPro() ? route('admin.dashboard') : route('home'));
 
             return redirect()->intended($target);
         }

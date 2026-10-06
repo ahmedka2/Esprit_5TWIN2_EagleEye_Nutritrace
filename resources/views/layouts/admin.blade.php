@@ -20,7 +20,10 @@
                 <a href="{{ route('admin.dashboard') }}" @class(['active' => request()->routeIs('admin.dashboard')])>Tableau de bord</a>
                 <a href="{{ route('admin.produits.index') }}" @class(['active' => request()->routeIs('admin.produits.*')])>Produits</a>
                 <a href="#" aria-disabled="true">Acteurs</a>
-                <a href="#" aria-disabled="true">Certifications</a>
+                @if (auth()->user()?->isAdmin())
+                    <a href="{{ route('admin.certifications.index') }}" @class(['active' => request()->routeIs('admin.certifications.*')])>Certifications</a>
+                    <a href="{{ route('admin.categories.index') }}" @class(['active' => request()->routeIs('admin.categories.*')])>Catégories</a>
+                @endif
             </nav>
             <a class="sidebar-foot" href="{{ route('home') }}">← Voir le site public</a>
         </aside>

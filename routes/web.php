@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\CategorieController;
+use App\Http\Controllers\Admin\CertificationController;
+use App\Http\Controllers\Admin\MatierePremiereController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProducteurController;
 use Illuminate\Support\Facades\Route;
 
 // ponytail: sample data until step 2 (Eloquent models Produit + Etape replace this array)
@@ -119,4 +123,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])-
         return view('admin.produits.index', ['produits' => $produits, 'categories' => array_unique(array_column(produits(), 'categorie'))]);
     })->name('produits.index');
     Route::get('/produits/create', fn () => view('admin.produits.form'))->name('produits.create');
+
+});
+
+Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified', 'producteur'])->group(function () {
+    Route::get('/', [ProducteurController::class, 'index'])->name('dashboard');
+    Route::resource('matieres-premieres', MatierePremiereController::class)
+        ->parameters(['matieres-premieres' => 'matierePremiere']);
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
+    Route::resource('categories', CategorieController::class);
+    Route::resource('certifications', CertificationController::class);
+    Route::resource('matieres-premieres', MatierePremiereController::class)
+        ->parameters(['matieres-premieres' => 'matierePremiere']);
 });
