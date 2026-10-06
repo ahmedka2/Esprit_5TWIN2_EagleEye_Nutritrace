@@ -16,6 +16,7 @@ class Transformation extends Model
         'etapes',
         'etape_actuelle',
         'rendement',
+        'nom_produit_final',
         'statut',
         'date_debut',
         'date_fin',

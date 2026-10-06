@@ -203,14 +203,18 @@ class TransformationController extends Controller
 
         $validated = $request->validate([
             'rendement' => 'required|numeric|min:0.01|max:100',
+            'nom_produit_final' => 'required|string|max:255',
         ], [
             'rendement.required' => 'Le rendement est obligatoire pour finaliser.',
             'rendement.min'      => 'Le rendement doit être supérieur à 0 %.',
             'rendement.max'      => 'Le rendement ne peut pas dépasser 100 %.',
+            'nom_produit_final.required' => 'Saisis le nom du produit final.',
+            'nom_produit_final.max' => 'Le nom du produit final ne doit pas dépasser 255 caractères.',
         ]);
 
         $transformation->update([
             'rendement' => $validated['rendement'],
+            'nom_produit_final' => $validated['nom_produit_final'],
             'statut'    => 'finalisee',
             'date_fin'  => now(),
         ]);

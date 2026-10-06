@@ -149,6 +149,10 @@ $enCours = $transformation->statut === 'en_cours';
             <span>%</span>
         </label>
         @error('rendement')<span class="field-error" id="rendement-error" role="alert">{{ $message }}</span>@enderror
+        <label>Nom du produit final *
+            <input type="text" name="nom_produit_final" maxlength="255" value="{{ old('nom_produit_final', $transformation->nom_produit_final) }}" required @error('nom_produit_final') aria-invalid="true" aria-describedby="nom-produit-final-error" @enderror>
+        </label>
+        @error('nom_produit_final')<span class="field-error" id="nom-produit-final-error" role="alert">{{ $message }}</span>@enderror
         <button class="btn" type="submit">
             Finaliser la transformation
         </button>

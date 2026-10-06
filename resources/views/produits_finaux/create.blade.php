@@ -25,7 +25,7 @@
                     <select name="transformation_id" required @error('transformation_id') aria-describedby="transformation-id-error" aria-invalid="true" @enderror>
                         <option value="">Choisir une transformation…</option>
                         @foreach ($transformations as $transformation)
-                            <option value="{{ $transformation->id }}" @selected((string) old('transformation_id') === (string) $transformation->id)>
+                            <option value="{{ $transformation->id }}" data-nom-produit="{{ $transformation->nom_produit_final }}" @selected((string) old('transformation_id') === (string) $transformation->id)>
                                 {{ $transformation->reference }} — {{ $transformation->matiere_premiere }} (rendement : {{ $transformation->rendement }} %)
                             </option>
                         @endforeach
@@ -38,7 +38,7 @@
                 <legend>Produit et lot</legend>
                 <div class="fields">
                     <label>Nom du produit <span aria-hidden="true">*</span>
-                        <input name="nom" value="{{ old('nom') }}" maxlength="255" required @error('nom') aria-describedby="nom-error" aria-invalid="true" @enderror>
+                        <input name="nom" value="{{ old('nom', $transformations->firstWhere('id', old('transformation_id'))?->nom_produit_final ?? '') }}" maxlength="255" required @error('nom') aria-describedby="nom-error" aria-invalid="true" @enderror>
                         @error('nom')<span class="field-error" id="nom-error">{{ $message }}</span>@enderror
                     </label>
                     <label>Quantité produite <span aria-hidden="true">*</span>
@@ -66,5 +66,17 @@
                 <button class="btn" type="submit">Créer le produit fini</button>
             </div>
         </form>
+    @endif
+    @if ($transformations->isNotEmpty())
+        <script>
+            const transformationSelect = document.querySelector('select[name="transformation_id"]');
+            const nomProduitInput = document.querySelector('input[name="nom"]');
+            const synchroniserNomProduit = () => {
+                const selectedOption = transformationSelect.selectedOptions[0];
+                nomProduitInput.value = selectedOption?.dataset.nomProduit ?? '';
+            };
+            transformationSelect?.addEventListener('change', synchroniserNomProduit);
+            if (transformationSelect?.value) synchroniserNomProduit();
+        </script>
     @endif
 @endsection
