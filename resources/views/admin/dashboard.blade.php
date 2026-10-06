@@ -3,7 +3,7 @@
 @section('title', 'Tableau de bord')
 
 @section('actions')
-    <a class="btn" href="{{ route('admin.produits.create') }}">Ajouter un produit</a>
+    <a class="btn" href="{{ route('produits-finaux.create') }}">Ajouter un produit</a>
 @endsection
 
 @section('content')

@@ -5,6 +5,7 @@
     <h1>Chaque produit a fait un voyage. <em>Lisez-le avant de l'acheter.</em></h1>
     <p class="lede">Producteur, transformateur, distributeur : chaque étape est signée par l'acteur qui l'a réalisée, avec ses émissions et ses certifications vérifiées.</p>
 
+    @if ($hero)
     <article class="lot-card">
         <header class="lot-head">
             <div>
@@ -18,6 +19,7 @@
         </header>
         <x-trace-route :etapes="$hero['etapes']" />
     </article>
+    @endif
 </section>
 
 <section id="produits" class="wrap section">
@@ -40,12 +42,11 @@
             </div>
             <div class="card-foot">
                 <p class="card-co2"><span class="mono">{{ number_format($total, 2, ',', ' ') }}</span> kg CO₂e<span class="card-steps">{{ count($p['etapes']) }} étapes</span></p>
-                @isset($ecoScores[$p['lot_id']]) <x-eco-score :score="$ecoScores[$p['lot_id']]" /> @endisset
             </div>
         </li>
         @if ($loop->last)</ul>@endif
     @empty
-        <p class="empty">Aucun produit ne correspond à ce code. Vérifiez le numéro de lot imprimé sous le code-barres, au format <span class="mono">NT-AAAA-0000</span>.</p>
+        <p class="empty">Aucun produit ne correspond à ce code. Vérifiez le numéro de lot imprimé sous le code-barres, au format <span class="mono">PF-AAAA-000</span>.</p>
     @endforelse
 </section>
 

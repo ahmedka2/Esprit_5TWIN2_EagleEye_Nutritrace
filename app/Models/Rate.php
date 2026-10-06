@@ -11,7 +11,12 @@ class Rate extends Model
 
     public const STATUTS = ['ouvert', 'traité', 'rejeté'];
 
-    protected $fillable = ['lot_id', 'user_id', 'motif', 'description', 'statut'];
+    protected $fillable = ['produit_final_id', 'user_id', 'motif', 'description', 'statut'];
+
+    public function produitFinal(): BelongsTo
+    {
+        return $this->belongsTo(ProduitFinal::class);
+    }
 
     public function user(): BelongsTo
     {

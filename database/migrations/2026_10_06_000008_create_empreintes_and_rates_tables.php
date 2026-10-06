@@ -8,20 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // ponytail: lot_id has no FK constraint until the lots table exists, then ->constrained()->cascadeOnDelete()
         Schema::create('empreintes_environnementales', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lot_id')->unique();
+            // one footprint per transformation step (etape = index in transformations.etapes)
+            $table->foreignId('transformation_id')->constrained()->cascadeOnDelete();
+            $table->unsignedSmallInteger('etape');
             $table->decimal('co2_kg', 8, 2);
             $table->decimal('eau_litres', 10, 2);
-            $table->char('eco_score', 1);
             $table->timestamps();
+            $table->unique(['transformation_id', 'etape']);
         });
 
         Schema::create('rates', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('lot_id')->index();
-            // ponytail: nullable until the public site has login, then make it required
+            $table->foreignId('produit_final_id')->constrained('produits_finaux')->cascadeOnDelete();
+            // nullable: anonymous visitors can report too
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('motif');
             $table->text('description');
