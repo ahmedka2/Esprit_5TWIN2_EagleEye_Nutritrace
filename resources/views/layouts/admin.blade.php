@@ -20,6 +20,7 @@
                 <a href="{{ route('admin.dashboard') }}" @class(['active' => request()->routeIs('admin.dashboard')])>Tableau de bord</a>
                 <a href="{{ route('admin.produits.index') }}" @class(['active' => request()->routeIs('admin.produits.*')])>Produits</a>
                 <a href="{{ route('transformations.index') }}" @class(['active' => request()->routeIs('transformations.*')])>Transformations</a>
+                <a href="{{ route('produits-finaux.index') }}" @class(['active' => request()->routeIs('produits-finaux.*')])>Produits finis</a>
                 <a href="#" aria-disabled="true">Acteurs</a>
                 <a href="#" aria-disabled="true">Certifications</a>
             </nav>

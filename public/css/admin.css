@@ -74,6 +74,8 @@ a { color: var(--accent-ink); text-underline-offset: .2em; }
 .btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn-ghost:hover { background: var(--surface); border-color: var(--accent); }
+.btn-danger { display: inline-block; padding: .6rem 1.15rem; border: 1.5px solid #b3412e; border-radius: 999px; background: #b3412e; color: #fff; font: 600 .9rem var(--body); cursor: pointer; }
+.btn-danger:hover { border-color: #8f3022; background: #8f3022; }
 
 .flash { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border-radius: 12px; padding: .75rem 1rem; margin: 0; }
 
