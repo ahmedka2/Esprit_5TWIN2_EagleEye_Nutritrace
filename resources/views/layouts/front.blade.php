@@ -27,6 +27,19 @@
                 <a href="{{ route('home') }}#produits">Produits</a>
                 <a href="{{ route('home') }}#lire">Lire une fiche</a>
                 @auth
+                    <a href="{{ route('favoris.index') }}" @class(['active' => request()->routeIs('favoris.*')])>Favoris</a>
+                    <a href="{{ route('chat.index') }}" @class(['active' => request()->routeIs('chat.*')]) style="position:relative;">
+                        Messages
+                        @php $unread = auth()->user()->unreadMessagesCount(); @endphp
+                        @if ($unread > 0)
+                            <span class="chat-badge-count">{{ $unread }}</span>
+                        @endif
+                    </a>
+                    @if (auth()->user()->isAdmin() || auth()->user()->isTransformateur() || auth()->user()->isDistributeur())
+                        <a href="{{ route('admin.dashboard') }}">Tableau de bord</a>
+                    @elseif (auth()->user()->isProducteur())
+                        <a href="{{ route('producteur.dashboard') }}">Espace Producteur</a>
+                    @endif
                     <a href="{{ route('profile.edit') }}" class="nav-user" style="text-decoration: none;" title="Mon profil">
                         {{ auth()->user()->name }} <small>({{ auth()->user()->role_label }})</small>
                     </a>
@@ -43,21 +56,30 @@
         </div>
     </header>
 
-    <main id="contenu">
-        @if (session('error'))
-            <div class="wrap" style="padding-top: 1.5rem;">
-                <p class="alert" role="alert" style="background: var(--error-tint); color: var(--error-ink); box-shadow: inset 4px 0 0 var(--error-ink);">
-                    {{ session('error') }}
-                </p>
-            </div>
-        @endif
+    <div id="toast-container" class="toast-container" aria-live="polite">
         @if (session('status'))
-            <div class="wrap" style="padding-top: 1.5rem;">
-                <p class="alert" role="status">
-                    {{ session('status') }}
-                </p>
+            <div class="toast toast--success" role="status" data-auto-dismiss="4500">
+                <span class="toast-icon" aria-hidden="true">✓</span>
+                <div class="toast-content">
+                    <p class="toast-message">{{ session('status') }}</p>
+                </div>
+                <button type="button" class="toast-close" aria-label="Fermer" onclick="dismissToast(this.closest('.toast'))">✕</button>
+                <div class="toast-progress"></div>
             </div>
         @endif
+        @if (session('error'))
+            <div class="toast toast--error" role="alert" data-auto-dismiss="5000">
+                <span class="toast-icon" aria-hidden="true">!</span>
+                <div class="toast-content">
+                    <p class="toast-message">{{ session('error') }}</p>
+                </div>
+                <button type="button" class="toast-close" aria-label="Fermer" onclick="dismissToast(this.closest('.toast'))">✕</button>
+                <div class="toast-progress"></div>
+            </div>
+        @endif
+    </div>
+
+    <main id="contenu">
         @yield('content')
     </main>
 
@@ -68,5 +90,104 @@
             <p class="mono">Émissions en kg CO₂e par unité vendue</p>
         </div>
     </footer>
+
+    <script>
+        function dismissToast(toast) {
+            if (!toast) return;
+            toast.classList.add('toast-hiding');
+            setTimeout(() => toast.remove(), 300);
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast--${type}`;
+            toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+            const iconText = type === 'error' ? '!' : '✓';
+
+            toast.innerHTML = `
+                <span class="toast-icon" aria-hidden="true">${iconText}</span>
+                <div class="toast-content">
+                    <p class="toast-message">${message}</p>
+                </div>
+                <button type="button" class="toast-close" aria-label="Fermer">✕</button>
+                <div class="toast-progress"></div>
+            `;
+
+            toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+
+            container.appendChild(toast);
+
+            setTimeout(() => dismissToast(toast), 4500);
+        }
+
+        // Auto dismiss server-rendered toasts
+        document.querySelectorAll('.toast[data-auto-dismiss]').forEach(toast => {
+            const timeout = parseInt(toast.dataset.autoDismiss, 10) || 4500;
+            setTimeout(() => dismissToast(toast), timeout);
+        });
+
+        // AJAX Favorite toggling for instantaneous UI feedback
+        document.addEventListener('submit', function (e) {
+            const form = e.target.closest('form');
+            if (!form || !form.action || !form.action.includes('/favori')) return;
+
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (res.redirected) {
+                    window.location.href = res.url;
+                    return null;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (!data) return;
+
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+
+                    if (submitBtn.classList.contains('btn-fav')) {
+                        if (data.favorited) {
+                            submitBtn.classList.add('btn-fav--active');
+                            submitBtn.innerHTML = '<span aria-hidden="true">★</span><span>Dans mes favoris</span>';
+                        } else {
+                            submitBtn.classList.remove('btn-fav--active');
+                            submitBtn.innerHTML = '<span aria-hidden="true">☆</span><span>Ajouter aux favoris</span>';
+                        }
+                    } else if (submitBtn.classList.contains('btn-icon-fav')) {
+                        if (data.favorited) {
+                            submitBtn.classList.add('is-fav');
+                            submitBtn.innerHTML = '<span aria-hidden="true">★</span>';
+                            submitBtn.title = 'Retirer des favoris';
+                        } else {
+                            submitBtn.classList.remove('is-fav');
+                            submitBtn.innerHTML = '<span aria-hidden="true">☆</span>';
+                            submitBtn.title = 'Ajouter aux favoris';
+                        }
+                    }
+                }
+
+                showToast(data.message, 'success');
+            })
+            .catch(err => {
+                if (submitBtn) submitBtn.disabled = false;
+                form.submit();
+            });
+        });
+    </script>
 </body>
 </html>

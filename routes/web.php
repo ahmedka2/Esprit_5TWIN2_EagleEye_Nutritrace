@@ -32,13 +32,35 @@ Route::get('/', function () {
     $all = produits();
     $found = array_filter($all, fn($p) => str_contains(mb_strtolower($p['lot'] . ' ' . $p['nom']), $q));
 
-    return view('front.home', ['produits' => $found, 'hero' => reset($all) ?: null]);
+    $userFavoriteLotIds = auth()->check()
+        ? auth()->user()->favoris()->pluck('lot_id')->all()
+        : [];
+
+    return view('front.home', [
+        'produits' => $found,
+        'hero' => reset($all) ?: null,
+        'userFavoriteLotIds' => $userFavoriteLotIds,
+    ]);
 })->name('home');
 
 Route::get('/produits/{produitFinal:code}', function (ProduitFinal $produitFinal) {
-    $produitFinal->load('transformation.empreintes', 'transformation.matierePremiere.producteur', 'transformation.matierePremiere.categorie', 'transformation.matierePremiere.certifications');
+    $produitFinal->load('transformation.empreintes', 'transformation.matierePremiere.producteur', 'transformation.matierePremiere.categorie', 'transformation.matierePremiere.certifications', 'user');
 
-    return view('front.produit', ['p' => $produitFinal->fiche(), 'lot' => $produitFinal]);
+    $creator = $produitFinal->creator;
+    $chatMessages = collect();
+
+    if (auth()->check() && $creator) {
+        $chatMessages = \App\Models\Message::betweenUsersForProduct(auth()->id(), $creator->id, $produitFinal->id)
+            ->with('sender')
+            ->get();
+    }
+
+    return view('front.produit', [
+        'p' => $produitFinal->fiche(),
+        'lot' => $produitFinal,
+        'creator' => $creator,
+        'chatMessages' => $chatMessages,
+    ]);
 })->name('produit');
 
 Route::post('/produits/{produitFinal:code}/signalements', function (Request $request, ProduitFinal $produitFinal) {
@@ -78,6 +100,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/email/verification-notification', [AuthController::class, 'resendVerification'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
+
+    Route::get('/favoris', [\App\Http\Controllers\FavoriController::class, 'index'])->name('favoris.index');
+    Route::get('/favoris/comparer', [\App\Http\Controllers\FavoriController::class, 'comparer'])->name('favoris.comparer');
+    Route::post('/produits/{produitFinal:code}/favori', [\App\Http\Controllers\FavoriController::class, 'toggle'])->name('favoris.toggle');
+    Route::patch('/favoris/{favori}/note', [\App\Http\Controllers\FavoriController::class, 'updateNote'])->name('favoris.note.update');
+    Route::delete('/favoris/{favori}', [\App\Http\Controllers\FavoriController::class, 'destroy'])->name('favoris.destroy');
+
+    Route::get('/messages', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
+    Route::get('/produits/{produitFinal:code}/chat/{interlocutor}', [\App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');
+    Route::get('/produits/{produitFinal:code}/chat/{interlocutor}/poll', [\App\Http\Controllers\ChatController::class, 'poll'])->name('chat.poll');
+    Route::post('/produits/{produitFinal:code}/messages', [\App\Http\Controllers\ChatController::class, 'store'])->name('chat.store');
+    Route::delete('/messages/{message}', [\App\Http\Controllers\ChatController::class, 'destroy'])->name('chat.destroy');
+    Route::post('/conversations/archive', [\App\Http\Controllers\ChatController::class, 'toggleArchive'])->name('chat.archive');
+
+    Route::resource('reponses-rapides', \App\Http\Controllers\ReponseRapideController::class)->parameters(['reponses-rapides' => 'reponseRapide']);
+    Route::get('/api/reponses-rapides', [\App\Http\Controllers\ReponseRapideController::class, 'apiList'])->name('reponses-rapides.api');
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])->group(function () {

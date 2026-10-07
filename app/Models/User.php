@@ -187,4 +187,41 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return Role::fromInput($role)->value;
     }
+
+    public function favoris(): HasMany
+    {
+        return $this->hasMany(Favori::class);
+    }
+
+    public function favoriteLots(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(ProduitFinal::class, 'favoris', 'user_id', 'lot_id')
+            ->withPivot('date_ajout')
+            ->withTimestamps();
+    }
+
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+    public function unreadMessagesCount(): int
+    {
+        return $this->receivedMessages()->where('is_read', false)->count();
+    }
+
+    public function reponsesRapides(): HasMany
+    {
+        return $this->hasMany(ReponseRapide::class);
+    }
+
+    public function conversationArchives(): HasMany
+    {
+        return $this->hasMany(ConversationArchive::class);
+    }
 }

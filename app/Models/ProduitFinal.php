@@ -14,6 +14,7 @@ class ProduitFinal extends Model
     protected $fillable = [
         'code',
         'nom',
+        'user_id',
         'transformation_id',
         'quantite',
         'unite',
@@ -84,6 +85,43 @@ class ProduitFinal extends Model
     public function rates(): HasMany
     {
         return $this->hasMany(Rate::class);
+    }
+
+    public function favoris(): HasMany
+    {
+        return $this->hasMany(Favori::class, 'lot_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'produit_final_id');
+    }
+
+    public function getCreatorAttribute(): ?User
+    {
+        if ($this->user_id && $this->user) {
+            return $this->user;
+        }
+
+        return $this->transformation?->matierePremiere?->producteur;
+    }
+
+    public function isFavoritedBy(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($this->relationLoaded('favoris')) {
+            return $this->favoris->contains('user_id', $user->id);
+        }
+
+        return $this->favoris()->where('user_id', $user->id)->exists();
     }
 
     /**
