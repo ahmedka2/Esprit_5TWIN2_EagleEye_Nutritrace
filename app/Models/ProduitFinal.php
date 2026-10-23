@@ -102,6 +102,33 @@ class ProduitFinal extends Model
         return $this->hasMany(Message::class, 'produit_final_id');
     }
 
+    public function signalementsQualite(): HasMany
+    {
+        return $this->hasMany(SignalementQualite::class, 'produit_final_id');
+    }
+
+    /**
+     * Retourne true si le lot possède au moins une ActionCorrective de type 'rappel_officiel',
+     * OU s'il cumule au moins 3 signalements de gravité 'critique' avec le statut 'ouvert' ou 'en_analyse'.
+     */
+    public function hasAlerteSanitaireActive(): bool
+    {
+        $hasRappelOfficiel = $this->signalementsQualite()
+            ->whereHas('actionsCorrectives', fn ($q) => $q->where('type_decision', 'rappel_officiel'))
+            ->exists();
+
+        if ($hasRappelOfficiel) {
+            return true;
+        }
+
+        $criticalCount = $this->signalementsQualite()
+            ->where('gravite', 'critique')
+            ->whereIn('statut', ['ouvert', 'en_analyse'])
+            ->count();
+
+        return $criticalCount >= 3;
+    }
+
     public function getCreatorAttribute(): ?User
     {
         if ($this->user_id && $this->user) {

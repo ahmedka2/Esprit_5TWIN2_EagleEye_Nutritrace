@@ -3,6 +3,21 @@
 @section('title', 'Mes Favoris')
 
 @section('content')
+<style>
+    .card.fav-card h3 a::after,
+    .fav-card h3 a::after {
+        content: none !important;
+        display: none !important;
+        pointer-events: none !important;
+    }
+    .fav-card .fav-note-box,
+    .fav-card .compare-select-wrap,
+    .fav-card .card-foot,
+    .fav-card .btn-icon-fav {
+        position: relative;
+        z-index: 5;
+    }
+</style>
 <section class="wrap section">
     <div class="section-head" style="margin-bottom: 2rem;">
         <p class="mono lot-code"><a href="{{ route('home') }}">Accueil</a> / Favoris</p>
@@ -135,21 +150,34 @@
                             </form>
                         </div>
 
-                        <div class="card-foot" style="margin-top:1rem; border-top:1px solid rgba(0,0,0,.06); padding-top:.75rem;">
-                            <p class="card-co2">
+                        @if ($lot->hasAlerteSanitaireActive())
+                            <div style="margin-top:.65rem; padding:.45rem .65rem; background:#fef2f2; border:1px solid #f87171; border-radius:6px; color:#991b1b; font-size:.76rem; font-weight:600; display:flex; align-items:center; gap:.35rem;">
+                                <span>🚨</span> Alerte Sanitaire Active sur ce lot
+                            </div>
+                        @endif
+
+                        <div class="card-foot" style="margin-top:1rem; border-top:1px solid rgba(0,0,0,.06); padding-top:.75rem; display:flex; justify-content:space-between; align-items:center; gap:.5rem; flex-wrap:wrap;">
+                            <p class="card-co2" style="margin:0;">
                                 <span class="mono">{{ number_format($totalCo2, 2, ',', ' ') }}</span> kg CO₂e
                                 <span class="card-steps">{{ count($fiche['etapes']) }} étapes</span>
                             </p>
-                            <a href="{{ route('produit', $fiche['slug']) }}" class="mono" style="font-size: .8rem; color: var(--fern); text-decoration:none;">
-                                Fiche →
-                            </a>
+                            <div style="display:flex; align-items:center; gap:.65rem;">
+                                <a href="{{ route('signalements-qualite.create', ['produit_final_id' => $lot->id, 'code_lot_saisi' => $fiche['lot']]) }}"
+                                   class="mono" style="font-size: .76rem; color: #dc2626; text-decoration:none; font-weight:600;"
+                                   title="Signaler une anomalie sur ce lot">
+                                    ⚠️ Signaler une anomalie
+                                </a>
+                                <a href="{{ route('produit', $fiche['slug']) }}" class="mono" style="font-size: .8rem; color: var(--fern); text-decoration:none;">
+                                    Fiche →
+                                </a>
+                            </div>
                         </div>
 
                         @if ($favoris->count() >= 2)
-                            <div style="margin-top:.75rem; padding-top:.6rem; border-top:1px dashed rgba(0,0,0,.08); display:flex; align-items:center;">
-                                <label style="display:inline-flex; align-items:center; gap:.5rem; font-size:.8rem; cursor:pointer; color:var(--muted); width:100%;">
-                                    <input type="checkbox" class="compare-checkbox" value="{{ $fiche['lot'] }}" data-nom="{{ $fiche['nom'] }}" style="accent-color:var(--fern); width:16px; height:16px;">
-                                    <span>Sélectionner pour comparer</span>
+                            <div class="compare-select-wrap" style="margin-top:.75rem; padding-top:.6rem; border-top:1px dashed rgba(0,0,0,.08); display:flex; align-items:center; position:relative; z-index:5;">
+                                <label style="display:inline-flex; align-items:center; gap:.5rem; font-size:.82rem; cursor:pointer; color:var(--muted); width:100%; position:relative; z-index:5; user-select:none;">
+                                    <input type="checkbox" class="compare-checkbox" value="{{ $fiche['lot'] }}" data-nom="{{ $fiche['nom'] }}" style="accent-color:var(--fern); width:17px; height:17px; cursor:pointer; position:relative; z-index:5;">
+                                    <span style="cursor:pointer; position:relative; z-index:5;">Sélectionner pour comparer</span>
                                 </label>
                             </div>
                         @endif

@@ -15,9 +15,16 @@
                 <h1>Mes Réponses Rapides</h1>
                 <p class="lede">Gagnez du temps en créant des modèles de réponses réutilisables en un clic dans vos échanges avec les consommateurs.</p>
             </div>
-            <a href="{{ route('chat.index') }}" class="btn-fav" style="text-decoration:none;">
-                ← Retour à la messagerie
-            </a>
+            <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+                @if (auth()->user()?->isProducteur())
+                    <a href="{{ route('producteur.dashboard') }}" class="btn-fav" style="text-decoration:none;">
+                        🌱 Espace producteur
+                    </a>
+                @endif
+                <a href="{{ route('chat.index') }}" class="btn-fav" style="text-decoration:none;">
+                    ← Retour à la messagerie
+                </a>
+            </div>
         </div>
     </div>
 

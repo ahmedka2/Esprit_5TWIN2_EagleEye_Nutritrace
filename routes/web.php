@@ -116,6 +116,17 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('reponses-rapides', \App\Http\Controllers\ReponseRapideController::class)->parameters(['reponses-rapides' => 'reponseRapide']);
     Route::get('/api/reponses-rapides', [\App\Http\Controllers\ReponseRapideController::class, 'apiList'])->name('reponses-rapides.api');
+
+    Route::resource('signalements-qualite', \App\Http\Controllers\SignalementQualiteController::class)
+        ->parameters(['signalements-qualite' => 'signalementQualite']);
+    Route::patch('/signalements-qualite/{signalementQualite}/statut', [\App\Http\Controllers\SignalementQualiteController::class, 'updateStatut'])
+        ->name('signalements-qualite.statut.update');
+
+    Route::resource('signalements-qualite.actions-correctives', \App\Http\Controllers\ActionCorrectiveController::class)
+        ->parameters([
+            'signalements-qualite' => 'signalementQualite',
+            'actions-correctives' => 'actionCorrective',
+        ])->except(['index', 'show', 'create']);
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])->group(function () {

@@ -28,6 +28,7 @@
                 <a href="{{ route('home') }}#lire">Lire une fiche</a>
                 @auth
                     <a href="{{ route('favoris.index') }}" @class(['active' => request()->routeIs('favoris.*')])>Favoris</a>
+                    <a href="{{ route('signalements-qualite.index') }}" @class(['active' => request()->routeIs('signalements-qualite.*')])>Signalements Qualité</a>
                     <a href="{{ route('chat.index') }}" @class(['active' => request()->routeIs('chat.*')]) style="position:relative;">
                         Messages
                         @php $unread = auth()->user()->unreadMessagesCount(); @endphp

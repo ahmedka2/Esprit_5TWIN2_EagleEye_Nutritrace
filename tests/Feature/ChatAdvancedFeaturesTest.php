@@ -189,4 +189,28 @@ class ChatAdvancedFeaturesTest extends TestCase
         $responseDelete->assertRedirect(route('reponses-rapides.index'));
         $this->assertDatabaseMissing('reponses_rapides', ['id' => $reponse->id]);
     }
+
+    public function test_producer_dashboard_shows_messages_and_reponses_rapides(): void
+    {
+        $producer = User::factory()->producteur()->create();
+        $consumer = User::factory()->consommateur()->create();
+        $prod = $this->createProduitFinal($producer);
+
+        // Send unread message from consumer to producer
+        Message::create([
+            'produit_final_id' => $prod->id,
+            'sender_id' => $consumer->id,
+            'receiver_id' => $producer->id,
+            'message' => 'Bonjour le producteur !',
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($producer)->get(route('producteur.dashboard'));
+        $response->assertOk();
+        $response->assertSee('Messagerie');
+        $response->assertSee('Réponses rapides');
+        $response->assertSee('Vous avez 1 nouveau message de consommateur');
+        $response->assertSee(route('chat.index'));
+        $response->assertSee(route('reponses-rapides.index'));
+    }
 }

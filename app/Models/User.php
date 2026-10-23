@@ -224,4 +224,34 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(ConversationArchive::class);
     }
+
+    public function signalementsQualite(): HasMany
+    {
+        return $this->hasMany(SignalementQualite::class, 'user_id');
+    }
+
+    public function actionsCorrectives(): HasMany
+    {
+        return $this->hasMany(ActionCorrective::class, 'responsable_id');
+    }
+
+    public function openSignalementsQualiteCount(): int
+    {
+        if ($this->isAdmin()) {
+            return SignalementQualite::whereIn('statut', ['ouvert', 'en_analyse'])->count();
+        }
+
+        if ($this->isProducteur()) {
+            $userId = $this->id;
+
+            return SignalementQualite::whereIn('statut', ['ouvert', 'en_analyse'])
+                ->whereHas('produitFinal', function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                        ->orWhereHas('transformation.matierePremiere', fn ($mq) => $mq->where('producteur_id', $userId));
+                })
+                ->count();
+        }
+
+        return $this->signalementsQualite()->whereIn('statut', ['ouvert', 'en_analyse'])->count();
+    }
 }

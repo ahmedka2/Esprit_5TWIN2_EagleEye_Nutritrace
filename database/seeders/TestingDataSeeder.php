@@ -743,5 +743,90 @@ class TestingDataSeeder extends Seeder
                 $qr
             );
         }
+
+        // ==========================================
+        // 14. SIGNALEMENTS QUALITÉ & ACTIONS CORRECTIVES (signalements_qualite & actions_correctives)
+        // ==========================================
+        $admin = $users['admin@nutritrace.fr'];
+        $producteurProvence = $users['vergers.provence@nutritrace.fr'];
+
+        if (isset($produitsFinaux['PF-2026-003'])) {
+            $sig1 = \App\Models\SignalementQualite::updateOrCreate(
+                ['reference' => 'SIG-2026-0001'],
+                [
+                    'user_id' => $consommateur->id,
+                    'produit_final_id' => $produitsFinaux['PF-2026-003']->id,
+                    'code_lot_saisi' => 'PF-2026-003',
+                    'type_anomalie' => 'defaut_emballage',
+                    'gravite' => 'moyenne',
+                    'description' => 'La bande de garantie papier sur deux pots du carton semblait légèrement décollée lors de mon achat en magasin spécialisé.',
+                    'lieu_achat' => 'Biocoop Aix-en-Provence',
+                    'date_constat' => now()->subDays(4)->toDateString(),
+                    'statut' => 'resolu',
+                ]
+            );
+
+            \App\Models\ActionCorrective::updateOrCreate(
+                [
+                    'signalement_qualite_id' => $sig1->id,
+                    'mesure_appliquee' => 'Réglage de la colleuse d\'inviolabilité sur la chaîne d\'empotage',
+                ],
+                [
+                    'responsable_id' => $producteur->id,
+                    'type_decision' => 'controle_qualite_interne',
+                    'rapport_intervention' => 'Vérification effectuée sur les témoins de réserve du lot PF-2026-003 : l\'opercule sous couvercle est intact et hermétique. Ajustement de la pression d\'encollage des étiquettes de scellé.',
+                    'statut_action' => 'terminee',
+                    'date_application' => now()->subDays(2)->toDateString(),
+                ]
+            );
+        }
+
+        if (isset($produitsFinaux['PF-2026-002'])) {
+            $sig2 = \App\Models\SignalementQualite::updateOrCreate(
+                ['reference' => 'SIG-2026-0002'],
+                [
+                    'user_id' => $lucas->id,
+                    'produit_final_id' => $produitsFinaux['PF-2026-002']->id,
+                    'code_lot_saisi' => 'PF-2026-002',
+                    'type_anomalie' => 'rupture_chaine_froid',
+                    'gravite' => 'critique',
+                    'description' => 'Constat de condensation excessive et température tiède au rayon frais lors de la réception du lot en point de vente.',
+                    'lieu_achat' => 'Épicerie Bio Marseille Prado',
+                    'date_constat' => now()->subDays(2)->toDateString(),
+                    'statut' => 'en_analyse',
+                ]
+            );
+
+            \App\Models\ActionCorrective::updateOrCreate(
+                [
+                    'signalement_qualite_id' => $sig2->id,
+                    'mesure_appliquee' => 'Audit des relevés de sonde thermique du camion frigorifique',
+                ],
+                [
+                    'responsable_id' => $producteurProvence->id,
+                    'type_decision' => 'verification_lot',
+                    'rapport_intervention' => 'Extraction en cours des journaux de température du transporteur et mise en quarantaine préventive de la palette témoin.',
+                    'statut_action' => 'en_cours',
+                    'date_application' => now()->subDay()->toDateString(),
+                ]
+            );
+        }
+
+        if (isset($produitsFinaux['PF-2026-001'])) {
+            \App\Models\SignalementQualite::updateOrCreate(
+                ['reference' => 'SIG-2026-0003'],
+                [
+                    'user_id' => $consommateur->id,
+                    'produit_final_id' => $produitsFinaux['PF-2026-001']->id,
+                    'code_lot_saisi' => 'PF-2026-001',
+                    'type_anomalie' => 'etiquetage_trompeur',
+                    'gravite' => 'faible',
+                    'description' => 'Le numéro de lot imprimé au jet d\'encre sur le couvercle est partiellement effacé par l\'humidité.',
+                    'lieu_achat' => 'Tunis - Magasin Bio Centre',
+                    'date_constat' => now()->subDay()->toDateString(),
+                    'statut' => 'ouvert',
+                ]
+            );
+        }
     }
 }
