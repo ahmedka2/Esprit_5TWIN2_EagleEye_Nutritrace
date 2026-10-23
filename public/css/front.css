@@ -181,9 +181,10 @@ a:hover { text-decoration-thickness: 2px; }
     padding: 1.4rem; display: flex; flex-direction: column; gap: .25rem;
     transition: box-shadow .2s, transform .2s, border-color .2s;
 }
-.card:hover, .card:focus-within { box-shadow: var(--shadow); transform: translateY(-3px); border-color: color-mix(in srgb, var(--fern) 40%, var(--line)); }
 .card h3 a { color: var(--forest); text-decoration: none; }
 .card h3 a::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.card.fav-card h3 a::after,
+.fav-card h3 a::after { content: none !important; display: none !important; }
 .card-lot { color: var(--moss); margin: 0 0 .35rem; }
 .card .stamps { margin-block: .6rem .9rem; }
 .card-foot { margin-top: auto; padding-top: .9rem; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }

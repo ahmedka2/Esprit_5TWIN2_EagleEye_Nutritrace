@@ -18,6 +18,21 @@
             <a class="wordmark" href="{{ route('producteur.dashboard') }}">Nutri<span>Trace</span> <small>Producteur</small></a>
             <nav aria-label="Espace producteur">
                 <a href="{{ route('producteur.dashboard') }}" @class(['active' => request()->routeIs('producteur.dashboard') || request()->routeIs('producteur.matieres-premieres.*')])>Mes matières premières</a>
+                @php $unreadCount = auth()->user()?->unreadMessagesCount() ?? 0; @endphp
+                <a href="{{ route('chat.index') }}" @class(['active' => request()->routeIs('chat.*')]) style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Messagerie</span>
+                    @if ($unreadCount > 0)
+                        <span style="background: #EF4444; color: #fff; border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; line-height: 1;">{{ $unreadCount }}</span>
+                    @endif
+                </a>
+                <a href="{{ route('reponses-rapides.index') }}" @class(['active' => request()->routeIs('reponses-rapides.*')])>Réponses rapides</a>
+                @php $openSigCount = auth()->user()?->openSignalementsQualiteCount() ?? 0; @endphp
+                <a href="{{ route('signalements-qualite.index') }}" @class(['active' => request()->routeIs('signalements-qualite.*')]) style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Signalements qualité</span>
+                    @if ($openSigCount > 0)
+                        <span style="background: #F59E0B; color: #fff; border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; line-height: 1;">{{ $openSigCount }}</span>
+                    @endif
+                </a>
             </nav>
             <a class="sidebar-foot" href="{{ route('home') }}">← Voir le site public</a>
         </aside>
@@ -27,6 +42,12 @@
                 <h1>@yield('title', 'Espace producteur')</h1>
                 <div class="topbar-actions">
                     @auth
+                        <a href="{{ route('chat.index') }}" class="btn btn-ghost" style="padding: .4rem .75rem; font-size: .82rem; text-decoration: none; display: inline-flex; align-items: center; gap: .35rem;" title="Messagerie">
+                            💬 Messages
+                            @if ($unreadCount > 0)
+                                <span style="background: #EF4444; color: #fff; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem;">{{ $unreadCount }}</span>
+                            @endif
+                        </a>
                         <a href="{{ route('profile.edit') }}" style="text-decoration: none;" title="Mon profil">
                             <span class="user-name" style="font-size: .88rem; font-weight: 600; color: var(--ink-2); margin-right: .25rem;">{{ auth()->user()->name }} <span class="tag" style="margin-left: .25rem; font-size: .75rem;">{{ auth()->user()->role_label }}</span></span>
                         </a>

@@ -3,6 +3,13 @@
 @section('title', 'Espace producteur')
 
 @section('actions')
+    <a class="btn btn-ghost" href="{{ route('chat.index') }}" style="display:inline-flex; align-items:center; gap:0.4rem;">
+        💬 Messagerie
+        @php $unreadCount = auth()->user()?->unreadMessagesCount() ?? 0; @endphp
+        @if ($unreadCount > 0)
+            <span style="background: #EF4444; color: #fff; border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.45rem;">{{ $unreadCount }}</span>
+        @endif
+    </a>
     <a class="btn" href="{{ route('producteur.matieres-premieres.create') }}">Ajouter une matière</a>
 @endsection
 
@@ -11,7 +18,47 @@
         <div class="panel-head">
             <div>
                 <h2>Bonjour {{ auth()->user()->name }}</h2>
-                <p class="muted">Gérez les matières premières que vous produisez et leurs certifications.</p>
+                <p class="muted">Gérez les matières premières que vous produisez et échangez avec vos consommateurs.</p>
+            </div>
+        </div>
+    </div>
+
+    @if ($unreadCount > 0)
+        <div class="panel" style="background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border-left: 4px solid var(--accent); padding: 1.15rem 1.4rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div style="font-size: 1.6rem; line-height: 1;">💬</div>
+                <div>
+                    <strong style="font-size: 1rem;">Vous avez {{ $unreadCount }} nouveau{{ $unreadCount > 1 ? 'x' : '' }} message{{ $unreadCount > 1 ? 's' : '' }} de consommateur{{ $unreadCount > 1 ? 's' : '' }} !</strong>
+                    <p class="muted small" style="margin: 0.2rem 0 0;">Des consommateurs s'interrogent sur vos produits ou matières premières.</p>
+                </div>
+            </div>
+            <a href="{{ route('chat.index') }}" class="btn" style="text-decoration: none; font-size: 0.85rem;">Consulter mes messages →</a>
+        </div>
+    @endif
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+        <div class="panel" style="padding: 1.15rem; display: flex; flex-direction: column; gap: 0.4rem;">
+            <span class="muted small" style="text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Matières premières</span>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 1.65rem; font-weight: 800; font-family: var(--display);">{{ $matieres->total() }}</span>
+                <a href="{{ route('producteur.matieres-premieres.create') }}" class="small" style="text-decoration: none; font-weight: 600;">+ Nouvelle</a>
+            </div>
+        </div>
+        <div class="panel" style="padding: 1.15rem; display: flex; flex-direction: column; gap: 0.4rem;">
+            <span class="muted small" style="text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Messages consommateurs</span>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 1.65rem; font-weight: 800; font-family: var(--display); color: {{ $unreadCount > 0 ? '#EF4444' : 'inherit' }};">
+                    {{ $unreadCount }} <small style="font-size: 0.8rem; font-weight: 500; color: var(--ink-2);">non lu{{ $unreadCount > 1 ? 's' : '' }}</small>
+                </span>
+                <a href="{{ route('chat.index') }}" class="small" style="text-decoration: none; font-weight: 600;">Ouvrir la boîte →</a>
+            </div>
+        </div>
+        <div class="panel" style="padding: 1.15rem; display: flex; flex-direction: column; gap: 0.4rem;">
+            <span class="muted small" style="text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Réponses Rapides</span>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                @php $rrCount = auth()->user()?->reponsesRapides()->count() ?? 0; @endphp
+                <span style="font-size: 1.65rem; font-weight: 800; font-family: var(--display);">{{ $rrCount }}</span>
+                <a href="{{ route('reponses-rapides.index') }}" class="small" style="text-decoration: none; font-weight: 600;">Gérer les modèles →</a>
             </div>
         </div>
     </div>

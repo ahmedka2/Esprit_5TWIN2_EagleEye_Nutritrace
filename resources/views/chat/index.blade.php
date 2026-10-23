@@ -12,6 +12,15 @@
                 <p class="lede">Échangez en direct entre consommateurs et producteurs pour poser vos questions sur l'origine et la fabrication de chaque lot.</p>
             </div>
             <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+                @if (auth()->user()?->isProducteur())
+                    <a href="{{ route('producteur.dashboard') }}" class="btn-fav" style="text-decoration:none; font-size:.85rem; padding:.45rem .85rem;">
+                        🌱 Espace producteur
+                    </a>
+                @elseif (auth()->user()?->isAdmin() || auth()->user()?->isTransformateur())
+                    <a href="{{ route('admin.dashboard') }}" class="btn-fav" style="text-decoration:none; font-size:.85rem; padding:.45rem .85rem;">
+                        ⚙️ Tableau de bord
+                    </a>
+                @endif
                 <a href="{{ route('reponses-rapides.index') }}" class="btn-fav" style="text-decoration:none; font-size:.85rem; padding:.45rem .85rem;">
                     ⚡ Réponses rapides
                 </a>

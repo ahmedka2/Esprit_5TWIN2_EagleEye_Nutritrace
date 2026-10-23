@@ -28,6 +28,21 @@
                     <a href="{{ route('admin.certifications.index') }}" @class(['active' => request()->routeIs('admin.certifications.*')])>Certifications</a>
                     <a href="{{ route('admin.categories.index') }}" @class(['active' => request()->routeIs('admin.categories.*')])>Catégories</a>
                 @endif
+                @php $adminUnread = auth()->user()?->unreadMessagesCount() ?? 0; @endphp
+                <a href="{{ route('chat.index') }}" @class(['active' => request()->routeIs('chat.*')]) style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Messagerie</span>
+                    @if ($adminUnread > 0)
+                        <span style="background: #EF4444; color: #fff; border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; line-height: 1;">{{ $adminUnread }}</span>
+                    @endif
+                </a>
+                <a href="{{ route('reponses-rapides.index') }}" @class(['active' => request()->routeIs('reponses-rapides.*')])>Réponses rapides</a>
+                @php $openAdminSigCount = auth()->user()?->openSignalementsQualiteCount() ?? 0; @endphp
+                <a href="{{ route('signalements-qualite.index') }}" @class(['active' => request()->routeIs('signalements-qualite.*')]) style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Qualité & Actions</span>
+                    @if ($openAdminSigCount > 0)
+                        <span style="background: #EF4444; color: #fff; border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; line-height: 1;">{{ $openAdminSigCount }}</span>
+                    @endif
+                </a>
             </nav>
             <a class="sidebar-foot" href="{{ route('home') }}">← Voir le site public</a>
         </aside>
@@ -37,6 +52,12 @@
                 <h1>@yield('title', 'Tableau de bord')</h1>
                 <div class="topbar-actions">
                     @auth
+                        <a href="{{ route('chat.index') }}" class="btn btn-ghost" style="padding: .4rem .75rem; font-size: .82rem; text-decoration: none; display: inline-flex; align-items: center; gap: .35rem;" title="Messagerie">
+                            💬 Messages
+                            @if ($adminUnread > 0)
+                                <span style="background: #EF4444; color: #fff; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.45rem;">{{ $adminUnread }}</span>
+                            @endif
+                        </a>
                         <a href="{{ route('profile.edit') }}" style="text-decoration: none;" title="Mon profil">
                             <span class="user-name" style="font-size: .88rem; font-weight: 600; color: var(--ink-2); margin-right: .25rem;">{{ auth()->user()->name }} <span class="tag" style="margin-left: .25rem; font-size: .75rem;">{{ auth()->user()->role_label }}</span></span>
                         </a>
@@ -53,6 +74,9 @@
             <main id="contenu" class="content">
                 @if (session('status'))
                     <p class="flash" role="status">{{ session('status') }}</p>
+                @endif
+                @if (session('error'))
+                    <p class="flash flash-error" role="alert">{{ session('error') }}</p>
                 @endif
                 @yield('content')
             </main>

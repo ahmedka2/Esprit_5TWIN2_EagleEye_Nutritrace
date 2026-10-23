@@ -10,13 +10,25 @@
 @endphp
 
 <section class="wrap product-head">
+    @if ($lot->hasAlerteSanitaireActive())
+        <div role="alert" style="background:#fef2f2; border:2px solid #dc2626; color:#991b1b; border-radius:12px; padding:1.15rem 1.4rem; margin-bottom:1.5rem; display:flex; align-items:flex-start; gap:1rem; flex-wrap:wrap;">
+            <span style="font-size:1.85rem; line-height:1;">🚨</span>
+            <div style="flex:1; min-width:240px;">
+                <strong style="font-size:1.05rem; display:block; margin-bottom:.25rem;">Alerte Sanitaire Active sur ce lot ({{ $lot->code }})</strong>
+                <p style="margin:0; font-size:.9rem;">
+                    Ce lot fait actuellement l'objet d'un rappel officiel ou d'un cumul critique de signalements qualité en cours d'analyse. Par mesure de précaution, vérifiez le numéro de lot avant consommation.
+                </p>
+            </div>
+        </div>
+    @endif
+
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1.5rem; flex-wrap:wrap;">
         <div>
             <p class="mono lot-code"><a href="{{ route('home') }}">Produits</a> / Lot {{ $p['lot'] }}</p>
             <h1>{{ $p['nom'] }}</h1>
             <p class="lede">{{ $p['categorie'] }} · origine {{ $p['origine'] }}</p>
         </div>
-        <div style="margin-top: .5rem;">
+        <div style="margin-top: .5rem; display:flex; align-items:center; gap:.65rem; flex-wrap:wrap;">
             @auth
                 @php $isFav = $lot->isFavoritedBy(auth()->user()); @endphp
                 <form method="POST" action="{{ route('favoris.toggle', $lot->code) }}">
@@ -26,10 +38,20 @@
                         <span>{{ $isFav ? 'Dans mes favoris' : 'Ajouter aux favoris' }}</span>
                     </button>
                 </form>
+                <a href="{{ route('signalements-qualite.create', ['produit_final_id' => $lot->id, 'code_lot_saisi' => $lot->code]) }}"
+                   class="btn-fav" style="text-decoration:none; border-color:#f87171; color:#dc2626;">
+                    <span aria-hidden="true">⚠️</span>
+                    <span>Signaler une anomalie</span>
+                </a>
             @else
                 <a href="{{ route('login') }}" class="btn-fav" title="Connectez-vous pour ajouter aux favoris">
                     <span aria-hidden="true">☆</span>
                     <span>Ajouter aux favoris</span>
+                </a>
+                <a href="{{ route('signalements-qualite.create', ['produit_final_id' => $lot->id, 'code_lot_saisi' => $lot->code]) }}"
+                   class="btn-fav" style="text-decoration:none; border-color:#f87171; color:#dc2626;">
+                    <span aria-hidden="true">⚠️</span>
+                    <span>Signaler une anomalie</span>
                 </a>
             @endauth
         </div>

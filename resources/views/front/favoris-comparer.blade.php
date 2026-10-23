@@ -101,6 +101,11 @@
                                     ★ Meilleur Choix
                                 </span>
                             @endif
+                            @if ($item['lot']->hasAlerteSanitaireActive())
+                                <span class="mono" style="display:inline-block; font-size:.7rem; background:#dc2626; color:#fff; padding:.15rem .5rem; border-radius:4px; margin-bottom:.35rem; font-weight:600;">
+                                    🚨 Alerte Sanitaire Active
+                                </span>
+                            @endif
                             <p class="mono card-lot" style="margin:0 0 .25rem 0;">{{ $item['code'] }} · {{ $item['categorie'] }}</p>
                             <h3 style="margin:0 0 .35rem 0; font-size:1.15rem;">
                                 <a href="{{ route('produit', $item['code']) }}" style="color:inherit; text-decoration:none;">
