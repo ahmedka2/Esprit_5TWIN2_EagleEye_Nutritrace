@@ -41,8 +41,11 @@
                     @elseif (auth()->user()->isProducteur())
                         <a href="{{ route('producteur.dashboard') }}">Espace Producteur</a>
                     @endif
-                    <a href="{{ route('profile.edit') }}" class="nav-user" style="text-decoration: none;" title="Mon profil">
-                        {{ auth()->user()->name }} <small>({{ auth()->user()->role_label }})</small>
+                    <a href="{{ route('profile.edit') }}" class="nav-user" style="text-decoration: none; display: inline-flex; align-items: center; gap: .45rem;" title="Mon profil">
+                        @if (auth()->user()->avatar_url)
+                            <img src="{{ auth()->user()->avatar_url }}" alt="" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;">
+                        @endif
+                        <span>{{ auth()->user()->name }} <small>({{ auth()->user()->role_label }})</small></span>
                     </a>
                     <form method="POST" action="{{ route('logout') }}" class="inline-form">
                         @csrf

@@ -47,12 +47,19 @@ class SignalementQualite extends Model
         'date_constat',
         'photo_preuve',
         'statut',
+        'ai_categorie_predite',
+        'ai_gravite_predite',
+        'ai_score_risque',
+        'ai_vision_label',
+        'ai_resume_triage',
+        'ai_model_used',
     ];
 
     protected function casts(): array
     {
         return [
             'date_constat' => 'date',
+            'ai_score_risque' => 'integer',
         ];
     }
 
@@ -67,6 +74,9 @@ class SignalementQualite extends Model
             }
             if (empty($signalement->gravite)) {
                 $signalement->gravite = 'moyenne';
+            }
+            if (empty($signalement->ai_model_used)) {
+                $signalement->ai_model_used = 'Xenova/multilingual-e5-small + Xenova/vit-base-patch16-224';
             }
         });
     }
@@ -224,5 +234,43 @@ class SignalementQualite extends Model
         }
 
         return ! $this->actionsCorrectives()->exists();
+    }
+
+    /**
+     * Retourne les propriétés d'affichage du badge de score de risque IA (0-100).
+     *
+     * @return array{score: int, label: string, color: string, bg: string, border: string}
+     */
+    public function getAiRisqueBadgeAttribute(): array
+    {
+        $score = (int) ($this->ai_score_risque ?? 0);
+
+        if ($score >= 70) {
+            return [
+                'score' => $score,
+                'label' => "Risque IA : {$score}/100",
+                'color' => '#991b1b',
+                'bg' => '#fef2f2',
+                'border' => '#f87171',
+            ];
+        }
+
+        if ($score >= 40) {
+            return [
+                'score' => $score,
+                'label' => "Risque IA : {$score}/100",
+                'color' => '#92400e',
+                'bg' => '#fffbeb',
+                'border' => '#fbbf24',
+            ];
+        }
+
+        return [
+            'score' => $score,
+            'label' => "Risque IA : {$score}/100",
+            'color' => '#1e40af',
+            'bg' => '#eff6ff',
+            'border' => '#93c5fd',
+        ];
     }
 }

@@ -127,6 +127,13 @@ Route::middleware('auth')->group(function () {
             'signalements-qualite' => 'signalementQualite',
             'actions-correctives' => 'actionCorrective',
         ])->except(['index', 'show', 'create']);
+
+    Route::post('/ai/analyze-signalement', [\App\Http\Controllers\AiAssistantController::class, 'analyzeSignalement'])
+        ->name('ai.analyze-signalement');
+    Route::post('/ai/suggest-replies', [\App\Http\Controllers\AiAssistantController::class, 'suggestReplies'])
+        ->name('ai.suggest-replies');
+    Route::post('/ai/analyze-note', [\App\Http\Controllers\AiAssistantController::class, 'analyzeNote'])
+        ->name('ai.analyze-note');
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])->group(function () {
@@ -185,7 +192,8 @@ Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified'
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
-    Route::resource('categories', CategorieController::class);
+    Route::resource('categories', CategorieController::class)
+        ->parameters(['categories' => 'categorie']);
     Route::resource('certifications', CertificationController::class);
     Route::resource('matieres-premieres', MatierePremiereController::class)
         ->parameters(['matieres-premieres' => 'matierePremiere']);

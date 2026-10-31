@@ -131,18 +131,26 @@
                             <form id="note-form-{{ $fav->id }}" method="POST" action="{{ route('favoris.note.update', $fav) }}" style="display:none; margin-top:.5rem;" onsubmit="submitNoteForm(event, {{ $fav->id }})">
                                 @csrf
                                 @method('PATCH')
+                                <div style="margin-bottom:.4rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.35rem;">
+                                    <label style="font-size:.75rem;">Note / Étoiles :</label>
+                                    <button type="button" onclick="predictStarsWithAi({{ $fav->id }})" style="background:rgba(46,125,79,0.1); border:1px solid var(--fern, #2E7D4F); color:var(--fern, #2E7D4F); border-radius:999px; font-size:.7rem; padding:.12rem .55rem; cursor:pointer; font-weight:600;">
+                                        🤖 Auto-étoiles IA
+                                    </button>
+                                </div>
                                 <div style="margin-bottom:.4rem;">
-                                    <label style="font-size:.75rem; display:block; margin-bottom:.2rem;">Note / Étoiles :</label>
-                                    <select name="rating" style="font-size:.78rem; padding:.2rem .4rem; border-radius:4px; border:1px solid #ccc; background:#fff;">
-                                        <option value="">Sans note</option>
+                                    <select id="note-rating-{{ $fav->id }}" name="rating" style="font-size:.78rem; padding:.2rem .4rem; border-radius:4px; border:1px solid #ccc; background:#fff; width:100%;">
+                                        <option value="">Auto-prédiction IA (1 à 5 ★)</option>
                                         @for ($i = 5; $i >= 1; $i--)
                                             <option value="{{ $i }}" {{ $fav->rating == $i ? 'selected' : '' }}>
                                                 {{ str_repeat('★', $i) }} ({{ $i }}/5)
                                             </option>
                                         @endfor
                                     </select>
+                                    <small id="ai-star-info-{{ $fav->id }}" class="mono" style="display:block; font-size:.66rem; color:var(--fern, #2E7D4F); margin-top:.2rem;">
+                                        Prédiction : Xenova/distilbert-base-multilingual-cased-sentiments-student
+                                    </small>
                                 </div>
-                                <textarea name="note" rows="2" placeholder="Ajoutez un rappel ou un avis personnel..." style="width:100%; font-size:.8rem; padding:.35rem; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; resize:vertical; font-family:inherit;">{{ $fav->note }}</textarea>
+                                <textarea id="note-textarea-{{ $fav->id }}" name="note" rows="2" placeholder="Ajoutez un rappel ou un avis personnel..." style="width:100%; font-size:.8rem; padding:.35rem; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; resize:vertical; font-family:inherit;">{{ $fav->note }}</textarea>
                                 <div style="display:flex; justify-content:flex-end; gap:.4rem; margin-top:.35rem;">
                                     <button type="button" onclick="toggleNoteForm({{ $fav->id }})" style="background:none; border:none; font-size:.75rem; color:var(--muted); cursor:pointer;">Annuler</button>
                                     <button type="submit" class="btn" style="padding:.25rem .6rem; font-size:.75rem;">Enregistrer</button>
@@ -185,6 +193,46 @@
                 @endif
             @endforeach
         </ul>
+
+        {{-- Section Éco-Recommandations IA (Xenova/multilingual-e5-small + KNN Écologique) --}}
+        @if (!empty($ecoRecommendations))
+            <div style="margin-top:2.5rem; padding:1.6rem; background:linear-gradient(135deg, rgba(46,125,79,0.06), rgba(30,64,175,0.04)); border:1.5px solid var(--fern, #2E7D4F); border-radius:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+                    <div>
+                        <span class="mono" style="font-size:.76rem; color:var(--fern, #2E7D4F); font-weight:700; text-transform:uppercase;">
+                            🌱 Éco-Recommandations IA (<code>Xenova/multilingual-e5-small</code> + KNN Écologique)
+                        </span>
+                        <h2 style="margin:.25rem 0; font-size:1.35rem;">Alternatives Bas-Carbone Recommandées</h2>
+                        <p class="muted" style="margin:0; font-size:.88rem;">
+                            Sélectionnées par Similarité Cosinus (Microsoft Research ONNX) pour réduire votre empreinte carbone et hydrique.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.1rem;">
+                    @foreach ($ecoRecommendations as $rec)
+                        <div style="background:var(--paper, #fff); border:1px solid var(--line, #e5e7eb); border-radius:12px; padding:1.15rem 1.3rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:.5rem; margin-bottom:.45rem;">
+                                <span class="mono" style="font-size:.76rem; color:var(--moss, #6b7280);">{{ $rec['code'] }} · {{ $rec['categorie'] }}</span>
+                                <span class="mono" style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:999px; padding:.15rem .55rem; font-size:.74rem; font-weight:700;">
+                                    -{{ number_format($rec['co2_reduction_percent'], 1, ',', ' ') }} % CO₂
+                                </span>
+                            </div>
+                            <h3 style="margin:0 0 .25rem; font-size:1.05rem;">
+                                <a href="{{ route('produit', $rec['code']) }}" style="text-decoration:none; color:inherit;">{{ $rec['nom'] }}</a>
+                            </h3>
+                            <p class="muted" style="margin:0 0 .65rem; font-size:.82rem;">Origine {{ $rec['origine'] }} · Similaire à {{ $rec['similarity_percent'] }} %</p>
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:.8rem; border-top:1px dashed var(--line, #e5e7eb); padding-top:.55rem;">
+                                <span>Éco-Score : <strong>{{ $rec['eco_score'] }}</strong> ({{ number_format($rec['co2_par_unite'], 2, ',', ' ') }} kg CO₂/u)</span>
+                                <a href="{{ route('produit', $rec['code']) }}" class="mono" style="color:var(--fern, #2E7D4F); font-weight:700; text-decoration:none;">
+                                    Découvrir →
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     @endif
 
     {{-- Barre flottante interactive de comparaison --}}
@@ -204,7 +252,39 @@
     </div>
 </section>
 
+<script src="{{ asset('js/nutritrace-ai.js') }}"></script>
 <script>
+function predictStarsWithAi(favId) {
+    const noteEl = document.getElementById('note-textarea-' + favId);
+    const selectEl = document.getElementById('note-rating-' + favId);
+    const infoEl = document.getElementById('ai-star-info-' + favId);
+
+    if (!noteEl || noteEl.value.trim().length < 2) {
+        alert('Veuillez d\'abord saisir votre commentaire personnel pour que l\'IA prédise le nombre d\'étoiles.');
+        return;
+    }
+
+    fetch("{{ route('ai.analyze-note') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': "{{ csrf_token() }}"
+        },
+        body: JSON.stringify({ note: noteEl.value.trim() })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.rating) {
+            if (selectEl) selectEl.value = String(data.rating);
+            if (infoEl) {
+                infoEl.textContent = `✨ ${data.label} — Prédiction : ${data.model_id}`;
+            }
+        }
+    })
+    .catch(() => {});
+}
 document.addEventListener('DOMContentLoaded', function () {
     const checkboxes = document.querySelectorAll('.compare-checkbox');
     const floatingBar = document.getElementById('compare-floating-bar');

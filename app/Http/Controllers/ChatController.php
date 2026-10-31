@@ -6,6 +6,7 @@ use App\Models\ConversationArchive;
 use App\Models\Message;
 use App\Models\ProduitFinal;
 use App\Models\User;
+use App\Services\NutriTraceAiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,7 +75,7 @@ class ChatController extends Controller
     /**
      * Show a conversation thread between the authenticated user and another user for a specific product.
      */
-    public function show(Request $request, ProduitFinal $produitFinal, User $interlocutor): View
+    public function show(Request $request, ProduitFinal $produitFinal, User $interlocutor, NutriTraceAiService $aiService): View
     {
         $authUser = $request->user();
 
@@ -92,6 +93,15 @@ class ChatController extends Controller
         // Producer quick replies if the user has any
         $reponsesRapides = $authUser->reponsesRapides()->orderBy('titre')->get();
 
+        // Smart Reply IA (Similarité Cosinus — Xenova/multilingual-e5-small)
+        $smartReplies = [];
+        if ($reponsesRapides->isNotEmpty()) {
+            $lastIncoming = $messages->where('sender_id', $interlocutor->id)->where('deleted_by_sender', false)->last();
+            $contextText = $lastIncoming?->message ?? ($produitFinal->nom . ' bio origine magasin');
+            $smartAnalysis = $aiService->suggestQuickReplies($contextText, $reponsesRapides, 2);
+            $smartReplies = $smartAnalysis['suggestions'];
+        }
+
         // Predefined contact topics / motifs
         $motifs = Message::MOTIFS;
 
@@ -105,15 +115,16 @@ class ChatController extends Controller
             'interlocutor' => $interlocutor,
             'messages' => $messages,
             'reponsesRapides' => $reponsesRapides,
+            'smartReplies' => $smartReplies,
             'motifs' => $motifs,
             'isArchived' => $isArchived,
         ]);
     }
 
     /**
-     * Store and send a new message with optional predefined motif.
+     * Store and send a new message with optional predefined motif and DistilBERT sentiment analysis.
      */
-    public function store(Request $request, ProduitFinal $produitFinal): JsonResponse|RedirectResponse
+    public function store(Request $request, ProduitFinal $produitFinal, NutriTraceAiService $aiService): JsonResponse|RedirectResponse
     {
         $authUser = $request->user();
 
@@ -147,19 +158,26 @@ class ChatController extends Controller
             return back()->with('error', 'Vous ne pouvez pas vous envoyer de message à vous-même.');
         }
 
+        $cleanText = trim($validated['message']);
+        $sentimentResult = $aiService->analyzeMessageSentiment($cleanText);
+
         $message = Message::create([
             'produit_final_id' => $produitFinal->id,
             'sender_id' => $authUser->id,
             'receiver_id' => $receiverId,
-            'message' => trim($validated['message']),
+            'message' => $cleanText,
             'motif' => $validated['motif'] ?? null,
             'is_read' => false,
             'deleted_by_sender' => false,
+            'ai_sentiment' => $sentimentResult['ai_sentiment'],
+            'ai_urgence_score' => $sentimentResult['ai_urgence_score'],
+            'ai_model_used' => $sentimentResult['ai_model_used'],
         ]);
 
         $message->load('sender');
 
         $motifLabel = $message->motif ? (Message::MOTIFS[$message->motif] ?? null) : null;
+        $aiBadge = $message->ai_sentiment_badge;
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -175,6 +193,10 @@ class ChatController extends Controller
                     'created_at' => $message->created_at->format('H:i'),
                     'created_at_human' => $message->created_at->diffForHumans(),
                     'is_mine' => true,
+                    'ai_sentiment' => $message->ai_sentiment,
+                    'ai_urgence_score' => $message->ai_urgence_score,
+                    'ai_model_used' => $message->ai_model_used,
+                    'ai_badge' => $aiBadge,
                 ],
             ]);
         }
@@ -216,6 +238,10 @@ class ChatController extends Controller
                 'sender_name' => $isMine ? 'Vous' : $m->sender->name . ' (' . $m->sender->role_label . ')',
                 'time' => $m->created_at->format('H:i'),
                 'is_mine' => $isMine,
+                'ai_sentiment' => $m->ai_sentiment,
+                'ai_urgence_score' => $m->ai_urgence_score,
+                'ai_model_used' => $m->ai_model_used,
+                'ai_badge' => $m->ai_sentiment_badge,
             ];
         });
 

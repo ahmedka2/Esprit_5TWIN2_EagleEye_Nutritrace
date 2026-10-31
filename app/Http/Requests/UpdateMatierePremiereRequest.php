@@ -22,6 +22,12 @@ class UpdateMatierePremiereRequest extends FormRequest
         if ($this->user()?->isProducteur()) {
             $this->request->remove('producteur_id');
         }
+        if (! $this->has('quantite')) {
+            $this->merge(['quantite' => 1]);
+        }
+        if (! $this->has('unite')) {
+            $this->merge(['unite' => 'kg']);
+        }
     }
 
     public function rules(): array

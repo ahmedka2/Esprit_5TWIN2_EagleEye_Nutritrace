@@ -190,9 +190,17 @@
                 </select>
             </div>
 
+            <div>
+                <label for="sort" style="display:block; font-size:.78rem; font-weight:600; margin-bottom:.3rem;">Tri Priorité IA</label>
+                <select id="sort" name="sort" class="sq-select">
+                    <option value="">Priorité standard</option>
+                    <option value="ai_risque" @selected(request('sort') === 'ai_risque')>🤖 Risque IA décroissant</option>
+                </select>
+            </div>
+
             <div style="display:flex; gap:.5rem;">
                 <button type="submit" class="btn" style="padding:.55rem 1.1rem; font-size:.85rem;">Filtrer</button>
-                @if (request()->anyFilled(['search', 'q', 'statut', 'gravite', 'type_anomalie']))
+                @if (request()->anyFilled(['search', 'q', 'statut', 'gravite', 'type_anomalie', 'sort']))
                     <a href="{{ route('signalements-qualite.index') }}" class="btn btn-ghost" style="padding:.55rem .9rem; font-size:.85rem; text-decoration:none; border:1px solid var(--line, #ccc); border-radius:999px;">
                         Réinitialiser
                     </a>
@@ -218,6 +226,7 @@
                 @php
                     $gBadge = $sig->gravite_badge;
                     $sBadge = $sig->statut_badge;
+                    $aiBadge = $sig->ai_risque_badge;
                     $prod = $sig->produitFinal;
                 @endphp
                 <article class="sq-item-card">
@@ -233,6 +242,9 @@
                                 <span class="sq-badge" style="background:{{ $sBadge['bg'] }}; color:{{ $sBadge['color'] }}; border-color:{{ $sBadge['border'] }};">
                                     <span>{{ $sBadge['icon'] }}</span> {{ $sBadge['label'] }}
                                 </span>
+                                <span class="sq-badge mono" style="background:{{ $aiBadge['bg'] }}; color:{{ $aiBadge['color'] }}; border-color:{{ $aiBadge['border'] }};" title="Modèle : {{ $sig->ai_model_used }}">
+                                    🤖 {{ $aiBadge['label'] }}
+                                </span>
                                 <span class="mono muted" style="font-size:.78rem;">
                                     Lot saisi : <strong>{{ $sig->code_lot_saisi }}</strong>
                                 </span>
@@ -247,9 +259,15 @@
                                 </a>
                             </h3>
 
-                            <p class="muted" style="margin:0 0 .65rem 0; font-size:.9rem;">
+                            <p class="muted" style="margin:0 0 .5rem 0; font-size:.9rem;">
                                 {{ \Illuminate\Support\Str::limit($sig->description, 160) }}
                             </p>
+
+                            @if ($sig->ai_resume_triage)
+                                <p style="margin:0 0 .6rem 0; font-size:.78rem; color:var(--fern, #2E7D4F); background:rgba(46,125,79,0.06); padding:.35rem .65rem; border-radius:6px;">
+                                    <strong>Diagnostic IA :</strong> {{ $sig->ai_resume_triage }}
+                                </p>
+                            @endif
 
                             <div style="display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap; font-size:.8rem; color:var(--moss, #6b7280);">
                                 <span>📅 Constaté le <strong>{{ $sig->date_constat?->format('d/m/Y') }}</strong></span>
@@ -258,6 +276,7 @@
                                 @endif
                                 <span>👤 Auteur : <strong>{{ $sig->user?->name ?? 'Consommateur' }}</strong></span>
                                 <span>🛠️ <strong>{{ $sig->actions_correctives_count }}</strong> action(s) corrective(s)</span>
+                                <span class="mono" style="font-size:.72rem;">🧠 {{ $sig->ai_model_used }}</span>
                             </div>
                         </div>
 

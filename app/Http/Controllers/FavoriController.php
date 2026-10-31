@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Favori;
 use App\Models\ProduitFinal;
+use App\Services\NutriTraceAiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,9 +13,9 @@ use Illuminate\View\View;
 class FavoriController extends Controller
 {
     /**
-     * Display all favorite products for the authenticated user.
+     * Display all favorite products for the authenticated user with AI Eco-Recommendations.
      */
-    public function index(Request $request): View
+    public function index(Request $request, NutriTraceAiService $aiService): View
     {
         $favoris = $request->user()
             ->favoris()
@@ -27,7 +28,9 @@ class FavoriController extends Controller
             ->latest('date_ajout')
             ->get();
 
-        return view('front.favoris', compact('favoris'));
+        $ecoRecommendations = $aiService->recommendEcoAlternatives($request->user(), 3);
+
+        return view('front.favoris', compact('favoris', 'ecoRecommendations'));
     }
 
     /**
@@ -70,7 +73,7 @@ class FavoriController extends Controller
     /**
      * Compare ecological impact and traceability for selected favorite products.
      */
-    public function comparer(Request $request): View|RedirectResponse|JsonResponse
+    public function comparer(Request $request, NutriTraceAiService $aiService): View|RedirectResponse|JsonResponse
     {
         $user = $request->user();
 
@@ -158,6 +161,7 @@ class FavoriController extends Controller
         // Best overall climate winner (lowest CO2 per unit)
         $ecoWinner = $compared->firstWhere('co2_par_unite', $minCo2);
         $eauWinner = $compared->firstWhere('eau_litres', $minEau);
+        $ecoRecommendations = $aiService->recommendEcoAlternatives($user, 3);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -166,6 +170,8 @@ class FavoriController extends Controller
                 'ecoWinner' => $ecoWinner,
                 'eauWinner' => $eauWinner,
                 'bestScore' => $bestScore,
+                'ecoRecommendations' => $ecoRecommendations,
+                'model_id' => NutriTraceAiService::MODEL_EMBEDDINGS,
             ]);
         }
 
@@ -175,13 +181,14 @@ class FavoriController extends Controller
             'ecoWinner' => $ecoWinner,
             'eauWinner' => $eauWinner,
             'bestScore' => $bestScore,
+            'ecoRecommendations' => $ecoRecommendations,
         ]);
     }
 
     /**
-     * Update personal note and rating for a favorite product.
+     * Update personal note and rating for a favorite product (with automatic DistilBERT 1-5 star prediction if rating omitted).
      */
-    public function updateNote(Request $request, Favori $favori): JsonResponse|RedirectResponse
+    public function updateNote(Request $request, Favori $favori, NutriTraceAiService $aiService): JsonResponse|RedirectResponse
     {
         if ($favori->user_id !== $request->user()->id) {
             abort(403, 'Action non autorisée.');
@@ -192,6 +199,13 @@ class FavoriController extends Controller
             'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
         ]);
 
+        $aiPredicted = false;
+        if (!empty($data['note']) && empty($data['rating'])) {
+            $prediction = $aiService->predictNoteStars($data['note']);
+            $data['rating'] = $prediction['rating'];
+            $aiPredicted = true;
+        }
+
         $favori->update($data);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -200,6 +214,8 @@ class FavoriController extends Controller
                 'message' => 'Note personnelle mise à jour.',
                 'note' => $favori->note,
                 'rating' => $favori->rating,
+                'ai_predicted' => $aiPredicted,
+                'model_id' => NutriTraceAiService::MODEL_SENTIMENT,
             ]);
         }
 

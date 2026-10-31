@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateSignalementQualiteRequest;
 use App\Models\ProduitFinal;
 use App\Models\SignalementQualite;
 use App\Models\User;
+use App\Services\NutriTraceAiService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,9 +74,16 @@ class SignalementQualiteController extends Controller
             });
         }
 
+        if ($request->string('sort')->toString() === 'ai_risque') {
+            $filteredQuery->orderByDesc('ai_score_risque')->latest();
+        } else {
+            $filteredQuery
+                ->orderByRaw("CASE WHEN gravite = 'critique' AND statut IN ('ouvert', 'en_analyse') THEN 0 ELSE 1 END")
+                ->orderByDesc('ai_score_risque')
+                ->latest();
+        }
+
         $signalements = $filteredQuery
-            ->orderByRaw("CASE WHEN gravite = 'critique' AND statut IN ('ouvert', 'en_analyse') THEN 0 ELSE 1 END")
-            ->latest()
             ->paginate(12)
             ->withQueryString();
 
@@ -122,9 +130,10 @@ class SignalementQualiteController extends Controller
     }
 
     /**
-     * Enregistre un nouveau signalement qualité.
+     * Enregistre un nouveau signalement qualité avec enrichissement IA embarqué
+     * (Xenova/multilingual-e5-small + Xenova/vit-base-patch16-224).
      */
-    public function store(StoreSignalementQualiteRequest $request): RedirectResponse
+    public function store(StoreSignalementQualiteRequest $request, NutriTraceAiService $aiService): RedirectResponse
     {
         $this->authorize('create', SignalementQualite::class);
 
@@ -133,6 +142,12 @@ class SignalementQualiteController extends Controller
         if ($request->hasFile('photo_preuve')) {
             $data['photo_preuve'] = $this->uploadPhoto($request);
         }
+
+        $aiResult = $aiService->analyzeSignalement(
+            trim($data['description']),
+            $request->input('ai_vision_label'),
+            $data['photo_preuve'] ?? null
+        );
 
         $signalement = SignalementQualite::create([
             'user_id' => $request->user()->id,
@@ -145,6 +160,12 @@ class SignalementQualiteController extends Controller
             'date_constat' => $data['date_constat'],
             'photo_preuve' => $data['photo_preuve'] ?? null,
             'statut' => 'ouvert',
+            'ai_categorie_predite' => $aiResult['ai_categorie_predite'],
+            'ai_gravite_predite' => $aiResult['ai_gravite_predite'],
+            'ai_score_risque' => $aiResult['ai_score_risque'],
+            'ai_vision_label' => $aiResult['ai_vision_label'],
+            'ai_resume_triage' => $aiResult['ai_resume_triage'],
+            'ai_model_used' => $aiResult['ai_model_used'],
         ]);
 
         return redirect()
@@ -224,7 +245,7 @@ class SignalementQualiteController extends Controller
     /**
      * Met à jour un signalement qualité (ou uniquement son statut par le Producteur / Admin).
      */
-    public function update(UpdateSignalementQualiteRequest $request, SignalementQualite $signalementQualite): RedirectResponse
+    public function update(UpdateSignalementQualiteRequest $request, SignalementQualite $signalementQualite, NutriTraceAiService $aiService): RedirectResponse
     {
         if ($request->isStatusOnlyUpdate()) {
             $this->authorize('changeStatut', $signalementQualite);
@@ -245,6 +266,19 @@ class SignalementQualiteController extends Controller
         } else {
             unset($data['photo_preuve']);
         }
+
+        $aiResult = $aiService->analyzeSignalement(
+            trim($data['description']),
+            $request->input('ai_vision_label'),
+            $data['photo_preuve'] ?? $signalementQualite->photo_preuve
+        );
+
+        $data['ai_categorie_predite'] = $aiResult['ai_categorie_predite'];
+        $data['ai_gravite_predite'] = $aiResult['ai_gravite_predite'];
+        $data['ai_score_risque'] = $aiResult['ai_score_risque'];
+        $data['ai_vision_label'] = $aiResult['ai_vision_label'];
+        $data['ai_resume_triage'] = $aiResult['ai_resume_triage'];
+        $data['ai_model_used'] = $aiResult['ai_model_used'];
 
         $signalementQualite->update($data);
 

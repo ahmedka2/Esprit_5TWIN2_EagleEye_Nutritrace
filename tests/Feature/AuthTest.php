@@ -96,7 +96,7 @@ class AuthTest extends TestCase
         $response = $this->actingAs($user)->get($verificationUrl);
 
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $response->assertRedirect('/admin?verified=1');
+        $response->assertRedirect('/producteur?verified=1');
     }
 
     public function test_unverified_pro_user_is_redirected_to_verify_email_when_accessing_admin(): void
@@ -177,6 +177,25 @@ class AuthTest extends TestCase
         Event::assertDispatched(PasswordReset::class);
     }
 
+    public function test_password_cannot_be_reset_with_invalid_or_expired_token(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'jean@ferme.fr',
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $response = $this->from('/reset-password/invalid-token?email=jean@ferme.fr')->post('/reset-password', [
+            'token' => 'invalid-token',
+            'email' => 'jean@ferme.fr',
+            'password' => 'new-secret-password',
+            'password_confirmation' => 'new-secret-password',
+        ]);
+
+        $response->assertRedirect('/reset-password/invalid-token?email=jean@ferme.fr');
+        $response->assertSessionHasErrors('email');
+        $this->assertTrue(Hash::check('old-password', $user->fresh()->password));
+    }
+
     public function test_pro_users_can_authenticate_and_redirect_to_admin(): void
     {
         $user = User::factory()->producteur()->create([
@@ -191,7 +210,7 @@ class AuthTest extends TestCase
         ]);
 
         $this->assertAuthenticatedAs($user);
-        $response->assertRedirect('/admin');
+        $response->assertRedirect('/producteur');
     }
 
     public function test_consumer_users_can_authenticate_and_redirect_to_home(): void

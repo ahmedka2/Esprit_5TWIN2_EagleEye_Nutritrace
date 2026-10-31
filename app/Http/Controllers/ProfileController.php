@@ -32,11 +32,16 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ], [
             'name.required' => 'Veuillez renseigner votre nom.',
             'email.required' => 'Veuillez renseigner une adresse email.',
             'email.email' => 'Veuillez renseigner une adresse email valide.',
             'email.unique' => 'Cette adresse email est déjà utilisée par un autre compte.',
+            'avatar.image' => 'Le fichier doit être une image.',
+            'avatar.mimes' => 'Les formats autorisés sont : jpeg, png, jpg, webp.',
+            'avatar.max' => 'La taille de l\'image ne doit pas dépasser 2 Mo.',
         ]);
 
         $emailChanged = $user->email !== $validated['email'];
@@ -45,6 +50,16 @@ class ProfileController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
         ]);
+
+        if ($request->boolean('remove_avatar') && $user->avatar) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            $user->avatar = null;
+        } elseif ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            }
+            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+        }
 
         if ($emailChanged) {
             $user->email_verified_at = null;
@@ -100,6 +115,10 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        if ($user->avatar) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+        }
 
         Auth::logout();
 

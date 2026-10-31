@@ -692,7 +692,9 @@ class TestingDataSeeder extends Seeder
                 ],
             ];
 
+            $aiService = new \App\Services\NutriTraceAiService();
             foreach ($chatMessages as $msgData) {
+                $sent = $aiService->analyzeMessageSentiment($msgData['message']);
                 Message::updateOrCreate(
                     [
                         'produit_final_id' => $miel->id,
@@ -703,6 +705,9 @@ class TestingDataSeeder extends Seeder
                     [
                         'motif' => 'certif',
                         'is_read' => $msgData['is_read'],
+                        'ai_sentiment' => $sent['ai_sentiment'],
+                        'ai_urgence_score' => $sent['ai_urgence_score'],
+                        'ai_model_used' => $sent['ai_model_used'],
                         'created_at' => $msgData['created_at'],
                         'updated_at' => $msgData['created_at'],
                     ]
@@ -749,8 +754,11 @@ class TestingDataSeeder extends Seeder
         // ==========================================
         $admin = $users['admin@nutritrace.fr'];
         $producteurProvence = $users['vergers.provence@nutritrace.fr'];
+        $aiService = new \App\Services\NutriTraceAiService();
 
         if (isset($produitsFinaux['PF-2026-003'])) {
+            $desc1 = 'La bande de garantie papier sur deux pots du carton semblait légèrement décollée lors de mon achat en magasin spécialisé.';
+            $ai1 = $aiService->analyzeSignalement($desc1);
             $sig1 = \App\Models\SignalementQualite::updateOrCreate(
                 ['reference' => 'SIG-2026-0001'],
                 [
@@ -759,10 +767,15 @@ class TestingDataSeeder extends Seeder
                     'code_lot_saisi' => 'PF-2026-003',
                     'type_anomalie' => 'defaut_emballage',
                     'gravite' => 'moyenne',
-                    'description' => 'La bande de garantie papier sur deux pots du carton semblait légèrement décollée lors de mon achat en magasin spécialisé.',
+                    'description' => $desc1,
                     'lieu_achat' => 'Biocoop Aix-en-Provence',
                     'date_constat' => now()->subDays(4)->toDateString(),
                     'statut' => 'resolu',
+                    'ai_categorie_predite' => $ai1['ai_categorie_predite'],
+                    'ai_gravite_predite' => $ai1['ai_gravite_predite'],
+                    'ai_score_risque' => $ai1['ai_score_risque'],
+                    'ai_resume_triage' => $ai1['ai_resume_triage'],
+                    'ai_model_used' => $ai1['ai_model_used'],
                 ]
             );
 
@@ -782,6 +795,8 @@ class TestingDataSeeder extends Seeder
         }
 
         if (isset($produitsFinaux['PF-2026-002'])) {
+            $desc2 = 'Constat de condensation excessive et température tiède au rayon frais lors de la réception du lot en point de vente.';
+            $ai2 = $aiService->analyzeSignalement($desc2);
             $sig2 = \App\Models\SignalementQualite::updateOrCreate(
                 ['reference' => 'SIG-2026-0002'],
                 [
@@ -790,10 +805,15 @@ class TestingDataSeeder extends Seeder
                     'code_lot_saisi' => 'PF-2026-002',
                     'type_anomalie' => 'rupture_chaine_froid',
                     'gravite' => 'critique',
-                    'description' => 'Constat de condensation excessive et température tiède au rayon frais lors de la réception du lot en point de vente.',
+                    'description' => $desc2,
                     'lieu_achat' => 'Épicerie Bio Marseille Prado',
                     'date_constat' => now()->subDays(2)->toDateString(),
                     'statut' => 'en_analyse',
+                    'ai_categorie_predite' => $ai2['ai_categorie_predite'],
+                    'ai_gravite_predite' => $ai2['ai_gravite_predite'],
+                    'ai_score_risque' => $ai2['ai_score_risque'],
+                    'ai_resume_triage' => $ai2['ai_resume_triage'],
+                    'ai_model_used' => $ai2['ai_model_used'],
                 ]
             );
 
@@ -813,6 +833,8 @@ class TestingDataSeeder extends Seeder
         }
 
         if (isset($produitsFinaux['PF-2026-001'])) {
+            $desc3 = 'Le numéro de lot imprimé au jet d\'encre sur le couvercle est partiellement effacé par l\'humidité.';
+            $ai3 = $aiService->analyzeSignalement($desc3);
             \App\Models\SignalementQualite::updateOrCreate(
                 ['reference' => 'SIG-2026-0003'],
                 [
@@ -821,10 +843,15 @@ class TestingDataSeeder extends Seeder
                     'code_lot_saisi' => 'PF-2026-001',
                     'type_anomalie' => 'etiquetage_trompeur',
                     'gravite' => 'faible',
-                    'description' => 'Le numéro de lot imprimé au jet d\'encre sur le couvercle est partiellement effacé par l\'humidité.',
+                    'description' => $desc3,
                     'lieu_achat' => 'Tunis - Magasin Bio Centre',
                     'date_constat' => now()->subDay()->toDateString(),
                     'statut' => 'ouvert',
+                    'ai_categorie_predite' => $ai3['ai_categorie_predite'],
+                    'ai_gravite_predite' => $ai3['ai_gravite_predite'],
+                    'ai_score_risque' => $ai3['ai_score_risque'],
+                    'ai_resume_triage' => $ai3['ai_resume_triage'],
+                    'ai_model_used' => $ai3['ai_model_used'],
                 ]
             );
         }

@@ -106,7 +106,7 @@ class TraceabilityCrudTest extends TestCase
                 'producteur_id' => $otherProducteur->id,
                 'certification_ids' => [$certification->id],
             ])
-            ->assertRedirect(route('admin.matieres-premieres.index'));
+            ->assertRedirect(route('producteur.matieres-premieres.index'));
 
         $matiere = MatierePremiere::query()->where('name', 'Tomates')->firstOrFail();
         $this->assertSame($producteur->id, $matiere->producteur_id);
@@ -134,7 +134,7 @@ class TraceabilityCrudTest extends TestCase
                 'price' => 3,
                 'categorie_id' => $matiere->categorie_id,
             ])
-            ->assertRedirect(route('admin.matieres-premieres.index'));
+            ->assertRedirect(route('producteur.matieres-premieres.index'));
 
         $this->actingAs($admin)
             ->delete(route('admin.matieres-premieres.destroy', $matiere))

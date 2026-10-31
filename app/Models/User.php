@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     public const ROLE_ADMIN = 'admin';
 
@@ -46,6 +47,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name',
         'email',
+        'avatar',
         'password',
         'role',
     ];
@@ -58,6 +60,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_recovery_codes',
+        'two_factor_secret',
     ];
 
     /**
@@ -144,6 +148,32 @@ class User extends Authenticatable implements MustVerifyEmail
             Role::Transformateur->value,
             Role::Distributeur->value,
         ], true);
+    }
+
+    /**
+     * Get the user's avatar public URL.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if ($this->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->avatar)) {
+            return asset('storage/'.$this->avatar);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the user's initials for avatar placeholder.
+     */
+    public function getInitialsAttribute(): string
+    {
+        $words = preg_split('/\s+/', trim((string) $this->name)) ?: [];
+        $initials = '';
+        foreach (array_slice($words, 0, 2) as $w) {
+            $initials .= mb_strtoupper(mb_substr($w, 0, 1));
+        }
+
+        return $initials ?: 'U';
     }
 
     /**

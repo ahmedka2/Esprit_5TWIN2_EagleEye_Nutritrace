@@ -159,4 +159,57 @@ class ProfileTest extends TestCase
         $response->assertSessionHasErrors('password');
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_user_can_upload_profile_photo(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $user = User::factory()->create([
+            'name' => 'Ferme Bio',
+            'email' => 'bio@ferme.fr',
+        ]);
+
+        $pngContent = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('avatar.png', $pngContent);
+
+        $response = $this->actingAs($user)->patch('/profile', [
+            'name' => 'Ferme Bio',
+            'email' => 'bio@ferme.fr',
+            'avatar' => $file,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $user->refresh();
+        $this->assertNotNull($user->avatar);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($user->avatar);
+        $this->assertStringContainsString('storage/avatars/', $user->avatar_url);
+    }
+
+    public function test_user_can_remove_profile_photo(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $user = User::factory()->create([
+            'name' => 'Ferme Bio',
+            'email' => 'bio@ferme.fr',
+            'avatar' => 'avatars/sample.jpg',
+        ]);
+
+        \Illuminate\Support\Facades\Storage::disk('public')->put('avatars/sample.jpg', 'content');
+
+        $response = $this->actingAs($user)->patch('/profile', [
+            'name' => 'Ferme Bio',
+            'email' => 'bio@ferme.fr',
+            'remove_avatar' => 1,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $user->refresh();
+        $this->assertNull($user->avatar);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing('avatars/sample.jpg');
+    }
 }

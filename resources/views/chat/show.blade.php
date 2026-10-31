@@ -49,12 +49,22 @@
                 @php 
                     $isMine = $msg->sender_id === auth()->id();
                     $motifLabel = $msg->motif ? ($motifs[$msg->motif] ?? null) : null;
+                    $sBadge = $msg->ai_sentiment_badge;
                 @endphp
                 <div class="chat-msg-row {{ $isMine ? 'chat-msg-row--mine' : 'chat-msg-row--theirs' }}" data-msg-id="{{ $msg->id }}" id="msg-row-{{ $msg->id }}">
                     <div class="chat-bubble {{ $msg->deleted_by_sender ? 'chat-bubble--deleted' : '' }}" style="{{ $msg->deleted_by_sender ? 'font-style:italic; opacity:.75;' : '' }}">
-                        @if ($motifLabel && !$msg->deleted_by_sender)
-                            <div style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--fern); margin-bottom:.25rem; display:flex; align-items:center; gap:.3rem;">
-                                <span>🏷️</span> {{ $motifLabel }}
+                        @if (!$msg->deleted_by_sender)
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:.3rem;">
+                                @if ($motifLabel)
+                                    <span style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--fern); display:inline-flex; align-items:center; gap:.3rem;">
+                                        <span>🏷️</span> {{ $motifLabel }}
+                                    </span>
+                                @else
+                                    <span></span>
+                                @endif
+                                <span class="mono" style="font-size:.68rem; font-weight:600; padding:.1rem .45rem; border-radius:999px; background:{{ $sBadge['bg'] }}; color:{{ $sBadge['color'] }}; border:1px solid {{ $sBadge['border'] }};" title="Analysé par {{ $msg->ai_model_used ?? 'Xenova/distilbert-base-multilingual-cased-sentiments-student' }}">
+                                    {{ $sBadge['label'] }}
+                                </span>
                             </div>
                         @endif
 
@@ -81,8 +91,34 @@
             @endforelse
         </div>
 
-        {{-- Barre d'outils au-dessus de la saisie : Motifs & Réponses rapides --}}
-        <div style="background:var(--paper); padding:.6rem 1.25rem; border-top: 1px solid var(--line); display:flex; flex-direction:column; gap:.5rem;">
+        {{-- Barre d'outils au-dessus de la saisie : Smart Reply IA, Motifs & Réponses rapides --}}
+        <div style="background:var(--paper); padding:.6rem 1.25rem; border-top: 1px solid var(--line); display:flex; flex-direction:column; gap:.55rem;">
+            {{-- Bandeau Smart Reply IA (Similarité Cosinus — Xenova/multilingual-e5-small) --}}
+            @if (!empty($smartReplies))
+                <div id="smart-reply-ai-banner" style="background:linear-gradient(135deg, rgba(46,125,79,0.08), rgba(30,64,175,0.06)); border:1px solid var(--fern, #2E7D4F); border-radius:8px; padding:.55rem .8rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.4rem; margin-bottom:.4rem;">
+                        <span class="mono" style="font-size:.74rem; font-weight:700; color:var(--fern, #2E7D4F);">
+                            🤖 Smart Reply IA (Similarité Cosinus — Modèle <code>Xenova/multilingual-e5-small</code>)
+                        </span>
+                        <span class="mono muted" style="font-size:.68rem;">Microsoft Research ONNX</span>
+                    </div>
+                    <div id="smart-reply-buttons" style="display:flex; gap:.5rem; flex-wrap:wrap;">
+                        @foreach ($smartReplies as $sr)
+                            <button type="button"
+                                    class="smart-reply-btn"
+                                    onclick="insertSmartReply(this.dataset.content)"
+                                    data-content="{{ $sr['contenu'] }}"
+                                    style="background:#fff; border:1px solid var(--fern, #2E7D4F); border-radius:999px; padding:.25rem .75rem; font-size:.76rem; cursor:pointer; color:var(--ink); display:inline-flex; align-items:center; gap:.4rem; transition:all .15s ease;">
+                                <span>✨ <strong>{{ $sr['titre'] }}</strong></span>
+                                <span class="mono" style="background:rgba(46,125,79,0.14); color:var(--fern, #2E7D4F); padding:.05rem .4rem; border-radius:999px; font-weight:700; font-size:.7rem;">
+                                    {{ number_format($sr['similarity_percent'], 1, ',', ' ') }} %
+                                </span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             {{-- Sélection de motif prédéfini --}}
             <div style="display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;">
                 <span class="mono" style="font-size:.75rem; color:var(--moss);">Sujet :</span>
@@ -118,8 +154,17 @@
     </div>
 </section>
 
+<script src="{{ asset('js/nutritrace-ai.js') }}"></script>
 <script>
     const csrfToken = "{{ csrf_token() }}";
+
+    function insertSmartReply(content) {
+        const input = document.getElementById('chat-input');
+        if (input && content) {
+            input.value = content;
+            input.focus();
+        }
+    }
 
     function deleteMessage(id) {
         if (!confirm('Voulez-vous supprimer ce message ?')) return;

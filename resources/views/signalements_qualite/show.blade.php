@@ -6,6 +6,7 @@
 @php
     $gBadge = $signalement->gravite_badge;
     $sBadge = $signalement->statut_badge;
+    $aiBadge = $signalement->ai_risque_badge;
 @endphp
 <style>
     .sq-show-wrap {
@@ -94,6 +95,9 @@
                 <span class="sq-badge" style="background:{{ $sBadge['bg'] }}; color:{{ $sBadge['color'] }}; border-color:{{ $sBadge['border'] }};">
                     {{ $sBadge['icon'] }} {{ $sBadge['label'] }}
                 </span>
+                <span class="sq-badge mono" style="background:{{ $aiBadge['bg'] }}; color:{{ $aiBadge['color'] }}; border-color:{{ $aiBadge['border'] }};">
+                    🤖 {{ $aiBadge['label'] }}
+                </span>
             </div>
             <h1 style="margin:0; font-size:clamp(1.5rem, 3vw, 2.2rem);">
                 {{ $signalement->type_anomalie_label }}
@@ -180,6 +184,30 @@
                 <div style="margin-bottom:1.25rem;">
                     <h3 style="font-size:.95rem; margin-bottom:.4rem; color:var(--moss, #4b5563);">Compte-rendu du consommateur :</h3>
                     <div style="background:var(--mist, #f9fafb); border:1px solid var(--line, #e5e7eb); border-radius:10px; padding:1.1rem; line-height:1.65; white-space:pre-line;">{{ $signalement->description }}</div>
+                </div>
+
+                {{-- Encart Diagnostic IA Embarqué --}}
+                <div style="background:linear-gradient(135deg, rgba(46,125,79,0.06), rgba(30,64,175,0.05)); border:1px solid var(--fern, #2E7D4F); border-radius:10px; padding:1rem 1.2rem; margin-bottom:1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem; margin-bottom:.45rem;">
+                        <strong style="font-size:.9rem;">🤖 Diagnostic &amp; Triage IA Embarqué</strong>
+                        <span class="mono" style="font-size:.78rem; font-weight:700; color:{{ $aiBadge['color'] }};">
+                            {{ $aiBadge['label'] }}
+                        </span>
+                    </div>
+                    <div style="width:100%; height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-bottom:.6rem;">
+                        <div style="width:{{ $signalement->ai_score_risque ?? 0 }}%; height:100%; background:{{ ($signalement->ai_score_risque ?? 0) >= 70 ? '#dc2626' : (($signalement->ai_score_risque ?? 0) >= 40 ? '#d97706' : '#2E7D4F') }};"></div>
+                    </div>
+                    @if ($signalement->ai_resume_triage)
+                        <p style="margin:0 0 .45rem; font-size:.85rem; line-height:1.45;">{{ $signalement->ai_resume_triage }}</p>
+                    @endif
+                    @if ($signalement->ai_vision_label)
+                        <p class="mono" style="margin:0 0 .4rem; font-size:.76rem; color:var(--fern, #2E7D4F);">
+                            📷 Vision ViT-224 : {{ $signalement->ai_vision_label }}
+                        </p>
+                    @endif
+                    <div style="font-size:.73rem; color:var(--moss, #6b7280); font-style:italic;">
+                        Modèles exécutés : <code>{{ $signalement->ai_model_used ?? 'Xenova/multilingual-e5-small + Xenova/vit-base-patch16-224' }}</code> (Microsoft Research &amp; Google Research ONNX)
+                    </div>
                 </div>
 
                 @if ($signalement->photo_preuve)

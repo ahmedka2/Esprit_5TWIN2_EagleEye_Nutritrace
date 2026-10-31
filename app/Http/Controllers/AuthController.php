@@ -41,11 +41,22 @@ class AuthController extends Controller
             'password.required' => 'Veuillez saisir votre mot de passe.',
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        /** @var User|null $user */
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && Hash::check($credentials['password'], $user->password)) {
+            if ($user->hasEnabledTwoFactorAuthentication()) {
+                $request->session()->put([
+                    'login.id' => $user->getKey(),
+                    'login.remember' => $request->boolean('remember'),
+                ]);
+
+                return redirect()->route('two-factor.login');
+            }
+
+            Auth::login($user, $request->boolean('remember'));
             $request->session()->regenerate();
 
-            /** @var User $user */
-            $user = Auth::user();
             $defaultTarget = $user->isProducteur()
                 ? route('producteur.dashboard')
                 : ($user->isPro() ? route('admin.dashboard') : route('home'));
