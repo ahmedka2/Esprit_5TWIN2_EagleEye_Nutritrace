@@ -107,6 +107,7 @@ a { color: var(--accent-ink); text-underline-offset: .2em; }
 .table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .row-actions { white-space: nowrap; text-align: right; }
 .row-actions a + a { margin-left: .75rem; }
+.row-actions form + a { margin-left: .75rem; }
 .link-button { border: 0; padding: 0; margin-left: .75rem; background: none; color: var(--accent-ink); font: inherit; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
 .row-actions form { display: inline; margin-left: .75rem; }
 .row-actions .link-button {
