@@ -44,4 +44,12 @@ class Livraison extends Model
     {
         return $this->belongsTo(ProduitFinal::class);
     }
+
+    /**
+     * Calcule les émissions de cette livraison à partir du véhicule associé.
+     */
+    public function getCo2LivraisonAttribute(): float
+    {
+        return (float) $this->distance_km * (float) ($this->vehicule?->emission_co2_km ?? 0);
+    }
 }

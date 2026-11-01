@@ -57,6 +57,11 @@
         <span class="muted small">kilomètres</span>
     </div>
     <div>
+        <dt><x-icon name="route" /> Émissions CO₂</dt>
+        <dd>{{ number_format($livraison->co2_livraison, 2, ',', ' ') }}</dd>
+        <span class="muted small">kg CO₂</span>
+    </div>
+    <div>
         <dt><x-icon name="thermometer" /> Température moyenne</dt>
         <dd>{{ $livraison->temperature_moyenne !== null ? number_format((float) $livraison->temperature_moyenne, 2, ',', ' ') : '—' }}</dd>
         <span class="muted small">°C</span>

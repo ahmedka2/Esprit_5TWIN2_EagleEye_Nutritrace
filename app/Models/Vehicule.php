@@ -11,6 +11,7 @@ class Vehicule extends Model
     protected $fillable = [
         'user_id',
         'immatriculation',
+        'marque',
         'type',
         'refrigere',
         'emission_co2_km',
