@@ -121,13 +121,14 @@ $empreintes = $transformation->empreintes->keyBy('etape');
                 </div>
 
                 @if ($em = $empreintes[$i] ?? null)
-                <p class="muted small mono">{{ number_format($em->co2_kg, 2, ',', ' ') }} kg CO₂e · {{ number_format($em->eau_litres, 0, ',', ' ') }} L d’eau</p>
+                <p class="muted small mono">{{ number_format($em->co2_kg, 2, ',', ' ') }} kg CO₂e · {{ number_format($em->eau_litres, 0, ',', ' ') }} L d’eau @if ($em->estime_par_ia) · <span class="ai-tag">estimation IA</span> @endif</p>
                 @endif
 
                 @if ($courant)
                 <form action="{{ route('transformations.etape.terminer', [$transformation, $i]) }}"
                     method="POST" class="step-action" data-async-form>
                     @csrf
+                    <input type="hidden" name="estime_par_ia" value="0">
                     <label>Carbone (kg CO₂e)
                         <input name="co2_kg" class="mono" type="number" min="0" step="0.01" value="{{ old('co2_kg') }}" required @error('co2_kg') aria-invalid="true" @enderror>
                         @error('co2_kg') <span class="field-error">{{ $message }}</span> @enderror
@@ -136,7 +137,11 @@ $empreintes = $transformation->empreintes->keyBy('etape');
                         <input name="eau_litres" class="mono" type="number" min="0" step="0.01" value="{{ old('eau_litres') }}" required @error('eau_litres') aria-invalid="true" @enderror>
                         @error('eau_litres') <span class="field-error">{{ $message }}</span> @enderror
                     </label>
-                    <button class="btn" type="submit">Terminer cette étape</button>
+                    <div class="step-buttons">
+                        <button class="btn btn-ghost" type="button" data-estimer="{{ route('transformations.etape.estimer', [$transformation, $i]) }}">Estimer avec l’IA</button>
+                        <button class="btn" type="submit">Terminer cette étape</button>
+                    </div>
+                    <p class="ai-hint small" role="status" aria-live="polite" hidden></p>
                 </form>
                 @endif
             </div>
@@ -174,6 +179,38 @@ $empreintes = $transformation->empreintes->keyBy('etape');
 </section>
 @endif
 <script>
+    // AI estimate: fills the step's CO₂/eau fields; the flag drops as soon as a value is edited by hand
+    document.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-estimer]');
+        if (!button) return;
+        const form = button.closest('form');
+        const hint = form.querySelector('.ai-hint');
+        button.disabled = true;
+        hint.hidden = false;
+        hint.classList.remove('is-error');
+        hint.textContent = 'Estimation en cours…';
+        try {
+            const response = await fetch(button.dataset.estimer, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': form.querySelector('[name=_token]').value },
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Estimation IA indisponible.');
+            form.co2_kg.value = data.co2_kg;
+            form.eau_litres.value = data.eau_litres;
+            form.estime_par_ia.value = '1';
+            hint.textContent = `Estimation IA : ${data.raison} Vérifiez les valeurs avant de terminer l’étape.`;
+        } catch (error) {
+            hint.classList.add('is-error');
+            hint.textContent = error.message;
+        } finally {
+            button.disabled = false;
+        }
+    });
+    document.addEventListener('input', (event) => {
+        if (event.target.matches('[name=co2_kg], [name=eau_litres]')) event.target.form.estime_par_ia.value = '0';
+    });
+
     document.addEventListener('submit', async (event) => {
         const form = event.target.closest('form[data-async-form]');
         if (!form) return;

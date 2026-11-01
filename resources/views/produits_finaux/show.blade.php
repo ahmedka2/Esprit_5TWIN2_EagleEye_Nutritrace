@@ -43,6 +43,15 @@
         @endif
     </section>
 
+    <section class="panel qr-panel">
+        <img src="{{ route('produit.qr', $produitFinal) }}" alt="QR code du lot {{ $produitFinal->code }}" width="160" height="160">
+        <div>
+            <h2>QR code du lot</h2>
+            <p class="muted">À imprimer sur l’emballage : il ouvre la page publique <a class="mono" href="{{ route('produit', $produitFinal) }}">{{ route('produit', $produitFinal) }}</a> avec le parcours et l’éco-score.</p>
+            <a class="btn btn-ghost" href="{{ route('produit.qr', $produitFinal) }}" download="QR-{{ $produitFinal->code }}.svg">Télécharger le QR code (SVG)</a>
+        </div>
+    </section>
+
     @php $empreinte = $produitFinal->empreinte(); @endphp
     <section class="panel">
         <div class="panel-head">

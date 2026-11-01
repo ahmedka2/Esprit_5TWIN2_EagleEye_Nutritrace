@@ -8,6 +8,7 @@ use App\Models\Rate;
 use App\Models\Transformation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class EmpreinteRateTest extends TestCase
@@ -83,5 +84,43 @@ class EmpreinteRateTest extends TestCase
         $this->patch("/admin/signalements/{$rate->id}", ['statut' => 'traité'])->assertSessionHasNoErrors();
         $this->assertSame('traité', $rate->fresh()->statut);
         $this->patch("/admin/signalements/{$rate->id}", ['statut' => 'bidon'])->assertSessionHasErrors('statut');
+    }
+
+    public function test_ai_estimates_a_step_and_flags_it_publicly(): void
+    {
+        $t = Transformation::create([
+            'reference' => 'TR-2026-009', 'matiere_premiere' => 'Tomates', 'unite' => 'kg',
+            'quantite_utilisee' => 500, 'statut' => 'en_cours', 'etape_actuelle' => 0,
+            'etapes' => [['nom' => 'sechage', 'ordre' => 1, 'statut' => 'en_cours']],
+        ]);
+        $url = "/transformations/{$t->id}/etape/0/estimer";
+
+        $this->postJson($url)->assertUnauthorized();
+        $this->actingAs(User::factory()->admin()->create());
+
+        Http::fake(['*/chat/completions' => Http::sequence()
+            ->push(['choices' => [['message' => ['content' => '{"co2_kg": 42.456, "eau_litres": 300, "raison": "Séchage énergivore."}']]]])
+            ->push(['choices' => [['message' => ['content' => 'je ne sais pas']]]])]);
+        $this->postJson($url)->assertOk()->assertExactJson(['co2_kg' => 42.46, 'eau_litres' => 300, 'raison' => 'Séchage énergivore.']);
+        Http::assertSent(fn ($r) => str_contains($r['messages'][1]['content'], 'Séchage') && $r['response_format']['type'] === 'json_object');
+        $this->postJson("/transformations/{$t->id}/etape/5/estimer")->assertNotFound();
+
+        $this->postJson($url)->assertStatus(503)->assertJsonPath('message', 'Estimation IA indisponible pour le moment. Saisissez les valeurs à la main.');
+
+        $this->post("/transformations/{$t->id}/etape/0/terminer", ['co2_kg' => 42.46, 'eau_litres' => 300, 'estime_par_ia' => '1'])->assertSessionHasNoErrors();
+        $this->assertTrue($t->empreintes()->sole()->estime_par_ia);
+
+        $t->update(['statut' => 'finalisee']);
+        $t->produitFinal()->create(['code' => 'PF-2026-009', 'nom' => 'Tomates séchées', 'quantite' => 50, 'unite' => 'kg', 'date_production' => '2026-11-01']);
+        $this->get('/produits/PF-2026-009')->assertOk()->assertSee('estimation IA');
+    }
+
+    public function test_lot_qr_code_points_to_public_page(): void
+    {
+        $lot = $this->lot();
+
+        $this->get('/produits/PF-2026-001/qr.svg')->assertOk()->assertHeader('Content-Type', 'image/svg+xml')->assertSee('<svg', false);
+        $this->actingAs(User::factory()->admin()->create());
+        $this->get("/produits-finaux/{$lot->id}")->assertOk()->assertSee('QR-PF-2026-001.svg');
     }
 }
