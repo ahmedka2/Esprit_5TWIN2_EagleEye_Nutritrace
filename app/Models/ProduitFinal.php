@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ProduitFinal extends Model
 {
@@ -46,6 +47,8 @@ class ProduitFinal extends Model
         $t = $this->transformation;
         $m = $t?->matierePremiere;
         $co2 = $t?->empreintes->sum('co2_kg') ?? 0;
+        $l = $this->livraison?->statut === 'annulee' ? null : $this->livraison;
+        $qte = max((float) $this->quantite, 0.01);
 
         return [
             'id' => $this->id,
@@ -60,7 +63,19 @@ class ProduitFinal extends Model
             ])->all() ?? [],
             'etapes' => [
                 ['role' => 'Producteur', 'acteur' => $m?->producteur?->name ?? '—', 'lieu' => $m?->name ?? '—', 'date' => $m?->created_at?->toDateString(), 'co2' => 0],
-                ['role' => 'Transformateur', 'acteur' => $t?->reference ?? '—', 'lieu' => count($t?->etapes ?? []).' étapes', 'date' => $t?->date_fin?->toDateString(), 'co2' => round($co2 / max((float) $this->quantite, 0.01), 2)],
+                ['role' => 'Transformateur', 'acteur' => $t?->reference ?? '—', 'lieu' => count($t?->etapes ?? []).' étapes', 'date' => $t?->date_fin?->toDateString(), 'co2' => round($co2 / $qte, 2)],
+                ...($l ? [[
+                    'role' => 'Distributeur',
+                    'acteur' => $l->user?->name ?? $l->vehicule?->immatriculation ?? '—',
+                    'lieu' => $l->depart.' → '.$l->arrivee.($l->statut === 'en_cours' ? ' (en route)' : ''),
+                    'date' => ($l->date_arrivee ?? $l->date_depart)?->toDateString(),
+                    'co2' => round($l->co2_livraison / $qte, 2),
+                ]] : []),
+                // le consommateur final clôt le parcours une fois la date d'arrivée passée
+                ...($l?->date_arrivee?->isPast() ? [[
+                    'role' => 'Consommateur', 'acteur' => 'Consommateur final', 'lieu' => $l->arrivee,
+                    'date' => $l->date_arrivee->toDateString(), 'co2' => 0,
+                ]] : []),
             ],
         ];
     }
@@ -83,6 +98,11 @@ class ProduitFinal extends Model
             'co2_par_unite' => $parUnite,
             'eco_score' => EmpreinteEnvironnementale::score($parUnite),
         ];
+    }
+
+    public function livraison(): HasOne
+    {
+        return $this->hasOne(Livraison::class);
     }
 
     public function rates(): HasMany

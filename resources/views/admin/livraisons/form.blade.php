@@ -15,7 +15,10 @@
         <legend>Itinéraire</legend>
         <div class="fields">
             <label>Code du produit à livrer
-                <input name="produit_code" class="mono" value="{{ old('produit_code', $livraison->produitFinal?->code) }}" placeholder="PF-2026-001" @error('produit_code') aria-invalid="true" @enderror>
+                <input name="produit_code" class="mono" list="produits-libres" autocomplete="off" value="{{ old('produit_code', $livraison->produitFinal?->code ?? request('produit_code')) }}" placeholder="PF-2026-001" @error('produit_code') aria-invalid="true" @enderror>
+                <datalist id="produits-libres">
+                    @foreach ($produitsLibres as $code => $nom)<option value="{{ $code }}">{{ $nom }}</option>@endforeach
+                </datalist>
                 <span class="hint">Le produit doit exister et ne pas être déjà affecté à une livraison.</span>
                 @error('produit_code') <span class="field-error">{{ $message }}</span> @enderror
             </label>

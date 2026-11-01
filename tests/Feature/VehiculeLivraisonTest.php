@@ -151,6 +151,32 @@ class VehiculeLivraisonTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_livraison_joins_parcours_and_syncs_product_statut(): void
+    {
+        $user = User::factory()->distributeur()->create(['name' => 'Trans Sfax']);
+        $produit = $this->createProduit('PF-PARC-001', ['quantite' => 10]);
+
+        $this->actingAs($user)->post(route('distributeur.livraisons.store'), $this->livraisonPayload($this->vehicule($user), 'PF-PARC-001'));
+        $livraison = Livraison::sole();
+
+        $stop = collect($produit->fresh()->fiche()['etapes'])->firstWhere('role', 'Distributeur');
+        $this->assertSame('Trans Sfax', $stop['acteur']);
+        $this->assertEquals(13.5, $stop['co2']); // 270 km × 0.5 kg / 10 unités
+        $this->assertSame('expedie', $produit->fresh()->statut);
+        $this->get(route('produit', $produit))->assertSee('Sfax → Tunis');
+
+        $roles = fn () => array_column($produit->fresh()->fiche()['etapes'], 'role');
+        $this->put(route('distributeur.livraisons.update', $livraison), $this->livraisonPayload($livraison->vehicule, 'PF-PARC-001', ['date_arrivee' => now()->addDay()->toDateTimeString()]));
+        $this->assertNotContains('Consommateur', $roles()); // arrivée pas encore atteinte
+
+        $this->put(route('distributeur.livraisons.update', $livraison), $this->livraisonPayload($livraison->vehicule, 'PF-PARC-001', ['date_depart' => now()->subDays(2)->toDateTimeString(), 'date_arrivee' => now()->subDay()->toDateTimeString()]));
+        $this->assertSame(['Producteur', 'Transformateur', 'Distributeur', 'Consommateur'], $roles());
+
+        $this->put(route('distributeur.livraisons.update', $livraison), $this->livraisonPayload($livraison->vehicule, 'PF-PARC-001', ['statut' => 'annulee']));
+        $this->assertSame('disponible', $produit->fresh()->statut);
+        $this->assertNull(collect($produit->fresh()->fiche()['etapes'])->firstWhere('role', 'Distributeur'));
+    }
+
     public function test_livraison_co2_is_distance_times_vehicule_emission(): void
     {
         $user = User::factory()->distributeur()->create();

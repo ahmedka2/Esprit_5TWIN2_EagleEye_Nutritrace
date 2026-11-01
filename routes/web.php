@@ -31,7 +31,7 @@ use Illuminate\Validation\Rule;
 if (! function_exists('produits')) {
     function produits(): array
     {
-        return ProduitFinal::with('transformation.empreintes', 'transformation.matierePremiere.producteur', 'transformation.matierePremiere.categorie', 'transformation.matierePremiere.certifications')
+        return ProduitFinal::with('transformation.empreintes', 'transformation.matierePremiere.producteur', 'transformation.matierePremiere.categorie', 'transformation.matierePremiere.certifications', 'livraison.vehicule', 'livraison.user')
             ->latest()->get()->mapWithKeys(fn (ProduitFinal $p) => [$p->code => $p->fiche()])->all();
     }
 }
@@ -56,7 +56,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/produits/{produitFinal:code}', function (ProduitFinal $produitFinal) {
-    $produitFinal->load('transformation.empreintes', 'transformation.matierePremiere.producteur', 'transformation.matierePremiere.categorie', 'transformation.matierePremiere.certifications', 'user');
+    $produitFinal->load('transformation.empreintes', 'transformation.matierePremiere.producteur', 'transformation.matierePremiere.categorie', 'transformation.matierePremiere.certifications', 'user', 'livraison.vehicule', 'livraison.user');
 
     $creator = $produitFinal->creator;
     $chatMessages = collect();
