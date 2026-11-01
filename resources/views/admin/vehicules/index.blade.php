@@ -18,7 +18,7 @@
         <tbody>
         @forelse ($vehicules as $vehicule)
             <tr>
-                <td class="mono"><strong>{{ $vehicule->immatriculation }}</strong></td>
+                <td class="mono"><strong>{{ $vehicule->immatriculation }}</strong>@if ($vehicule->marque)<br><span class="muted small">{{ $vehicule->marque }}</span>@endif</td>
                 <td><strong>{{ \App\Enums\TypeVehicule::labelFor($vehicule->type) }}</strong><br><span class="muted small">{{ $vehicule->refrigere ? 'Transport réfrigéré' : 'Transport standard' }}</span></td>
                 <td><span class="tag">{{ $vehicule->refrigere ? 'Réfrigéré' : 'Standard' }}</span></td>
                 <td class="num mono">{{ $vehicule->emission_co2_km !== null ? number_format((float) $vehicule->emission_co2_km, 2, ',', ' ') : '—' }}</td>

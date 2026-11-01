@@ -41,6 +41,7 @@
     <dl>
         <div><dt><x-icon name="truck" /> Type</dt><dd>{{ \App\Enums\TypeVehicule::labelFor($vehicule->type) }}</dd></div>
         <div><dt>Immatriculation</dt><dd class="mono">{{ $vehicule->immatriculation }}</dd></div>
+        <div><dt>Marque</dt><dd>{{ $vehicule->marque ?: '—' }}</dd></div>
     </dl>
 </section>
 

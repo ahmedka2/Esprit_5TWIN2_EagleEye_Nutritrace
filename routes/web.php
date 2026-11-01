@@ -169,6 +169,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro', '
         return back()->with('status', 'Signalement mis à jour.');
     })->name('rates.update');
 
+    Route::post('vehicules/analyser-carte-grise', [VehiculeController::class, 'analyseCarteGrise'])->name('vehicules.analyse-carte-grise');
     Route::resource('vehicules', VehiculeController::class);
     Route::resource('livraisons', LivraisonController::class);
 });
@@ -177,6 +178,7 @@ Route::prefix('distributeur')->name('distributeur.')->middleware(['auth', 'verif
     Route::get('/', [DistributeurController::class, 'index'])->name('dashboard');
     Route::get('/statistiques', [LivraisonStatistiqueController::class, 'index'])->name('statistiques.index');
     Route::get('/statistiques/export', [LivraisonStatistiqueController::class, 'export'])->name('statistiques.export');
+    Route::post('vehicules/analyser-carte-grise', [VehiculeController::class, 'analyseCarteGrise'])->name('vehicules.analyse-carte-grise');
     Route::resource('vehicules', VehiculeController::class);
     Route::resource('livraisons', LivraisonController::class);
 });

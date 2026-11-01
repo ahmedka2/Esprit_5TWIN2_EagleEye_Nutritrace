@@ -173,6 +173,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
 .filters label { min-width: 180px; }
 
 .form { display: grid; gap: 1.5rem; }
+.scan-carte-grise { display: grid; gap: 1rem; margin: 0 0 1.5rem; padding: 1rem; border: 1px dashed var(--line); border-radius: 14px; background: color-mix(in srgb, var(--bg) 55%, transparent); }
+.scan-carte-grise h2 { margin: 0; }
+.scan-carte-grise p { margin: .25rem 0 0; }
+.scan-carte-grise-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.scan-carte-grise-actions .btn { display: inline-flex; align-items: center; }
+#camera-zone { display: grid; gap: .75rem; max-width: 460px; }
+#camera-video, #camera-photo { width: 100%; border-radius: 12px; background: #101010; }
 fieldset.panel { margin: 0; min-width: 0; }
 legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem; }
 .fields legend { position: relative; top: -.2rem; }
