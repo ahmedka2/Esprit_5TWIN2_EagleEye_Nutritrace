@@ -8,25 +8,43 @@
 @endsection
 
 @section('content')
+    <p><a class="btn btn-ghost" href="{{ route('produits-finaux.download', $produitFinal) }}">Télécharger la fiche PDF</a></p>
+
     @if (session('success')) <p class="flash" role="status">{{ session('success') }}</p> @endif
     @if (session('error')) <p class="form-error" role="alert">{{ session('error') }}</p> @endif
 
     <section class="panel">
-        <div class="panel-head">
-            <div>
+        <div class="product-summary">
+            <div class="product-summary-text">
                 <p class="muted small">Code de traçabilité</p>
-                <h2 class="mono">{{ $produitFinal->code }}</h2>
+                <p class="mono product-summary-code">{{ $produitFinal->code }}</p>
+                <h2>{{ $produitFinal->nom }}</h2>
+                <span class="tag {{ $produitFinal->statut !== 'disponible' ? 'tag-warn' : '' }}">{{ match ($produitFinal->statut) { 'disponible' => 'Disponible', 'reserve' => 'Réservé', 'expedie' => 'Expédié', default => ucfirst($produitFinal->statut) } }}</span>
+                <dl class="detail-grid product-summary-details">
+                    <div><dt>Quantité produite</dt><dd>{{ $produitFinal->quantite }} {{ $produitFinal->unite }}</dd></div>
+                    <div><dt>Date de production</dt><dd>{{ $produitFinal->date_production?->format('d/m/Y') ?? '—' }}</dd></div>
+                    <div><dt>Date de péremption</dt><dd>{{ $produitFinal->date_peremption?->format('d/m/Y') ?? 'Non renseignée' }}</dd></div>
+                    <div><dt>Créé le</dt><dd>{{ $produitFinal->created_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
+                </dl>
             </div>
-            <span class="tag {{ $produitFinal->statut !== 'disponible' ? 'tag-warn' : '' }}">{{ match ($produitFinal->statut) { 'disponible' => 'Disponible', 'reserve' => 'Réservé', 'expedie' => 'Expédié', default => ucfirst($produitFinal->statut) } }}</span>
+            <div class="product-summary-media">
+                @if ($produitFinal->transformation?->final_photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($produitFinal->transformation->final_photo_path))
+                    <img class="product-summary-photo" src="{{ '/storage/'.ltrim($produitFinal->transformation->final_photo_path, '/') }}" alt="Photo de {{ $produitFinal->nom }}">
+                @else
+                    <div class="product-summary-placeholder" aria-label="Aucune photo disponible">Photo indisponible</div>
+                @endif
+            </div>
         </div>
+        <style>
+            .product-summary{display:grid;grid-template-columns:140px minmax(0,1fr);gap:1rem;align-items:stretch;margin-bottom:1rem}
+            .product-summary-media{position:relative;grid-column:1;grid-row:1;min-height:190px;align-self:stretch;overflow:hidden;border-radius:12px;background:var(--surface-2,#edf2ee);border:1px solid var(--line,#dce5de)}
+            .product-summary-photo{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;padding:.5rem;box-sizing:border-box}
+            .product-summary-placeholder{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:.5rem;color:var(--ink-2,#59665e);font-size:.75rem}
+            .product-summary-text{grid-column:2;grid-row:1;min-width:0;display:flex;flex-direction:column;justify-content:center}.product-summary-details{grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem 1rem;margin-top:1rem}.product-summary-text h2{font-size:clamp(1.2rem,2.4vw,1.65rem);line-height:1.2;margin:.25rem 0 .65rem;overflow-wrap:anywhere}
+            .product-summary-text p{margin:.1rem 0}.product-summary-code{font-size:.9rem;letter-spacing:.03em}
+            @media(max-width:560px){.product-summary{grid-template-columns:92px minmax(0,1fr);gap:.65rem}.product-summary-media{grid-column:1;min-height:170px}.product-summary-details{grid-template-columns:1fr;gap:.7rem}.product-summary-text{grid-column:2}.product-summary-text h2{font-size:1.05rem}}
+        </style>
 
-        <dl class="detail-grid">
-            <div><dt>Nom du produit</dt><dd>{{ $produitFinal->nom }}</dd></div>
-            <div><dt>Quantité produite</dt><dd>{{ $produitFinal->quantite }} {{ $produitFinal->unite }}</dd></div>
-            <div><dt>Date de production</dt><dd>{{ $produitFinal->date_production?->format('d/m/Y') ?? '—' }}</dd></div>
-            <div><dt>Date de péremption</dt><dd>{{ $produitFinal->date_peremption?->format('d/m/Y') ?? 'Non renseignée' }}</dd></div>
-            <div><dt>Créé le</dt><dd>{{ $produitFinal->created_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
-        </dl>
     </section>
 
     <section class="panel">

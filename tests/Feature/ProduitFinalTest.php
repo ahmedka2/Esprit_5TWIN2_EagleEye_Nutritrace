@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ProduitFinal;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\CreatesProduits;
 use Tests\TestCase;
@@ -10,6 +11,12 @@ use Tests\TestCase;
 class ProduitFinalTest extends TestCase
 {
     use CreatesProduits, RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->actingAs(User::factory()->transformateur()->create());
+    }
 
     private function payload(int $transformationId): array
     {

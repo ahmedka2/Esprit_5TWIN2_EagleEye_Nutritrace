@@ -13,10 +13,15 @@ class TransformationWorkflowTest extends TestCase
 {
     use CreatesProduits, RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->actingAs(User::factory()->transformateur()->create());
+    }
+
     private function store(MatierePremiere $matiere, float $quantite)
     {
-        return $this->actingAs(User::factory()->transformateur()->create())
-            ->post(route('transformations.store'), [
+        return $this->post(route('transformations.store'), [
                 'matiere_premiere_id' => $matiere->id,
                 'unite' => 'kg',
                 'quantite_utilisee' => $quantite,
@@ -68,7 +73,6 @@ class TransformationWorkflowTest extends TestCase
 
     public function test_full_workflow_launch_complete_steps_and_finalise(): void
     {
-        $user = User::factory()->transformateur()->create();
         $t = $this->createTransformation([
             'statut' => 'brouillon',
             'etapes' => [
@@ -76,8 +80,6 @@ class TransformationWorkflowTest extends TestCase
                 ['nom' => 'cuisson', 'ordre' => 2, 'statut' => 'en_attente'],
             ],
         ]);
-        $this->actingAs($user);
-
         $this->post(route('transformations.lancer', $t));
         $this->assertSame('en_cours', $t->fresh()->statut);
         $this->assertSame('en_cours', $t->fresh()->etapes[0]['statut']);

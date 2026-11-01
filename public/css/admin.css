@@ -247,6 +247,14 @@ legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem
 .timeline-item.is-current .timeline-card { border-color: var(--harvest); background: var(--warn-tint); }
 .timeline-item.is-current .timeline-badge { background: color-mix(in srgb, var(--harvest) 24%, var(--surface)); color: var(--warn-ink); }
 .timeline-item.is-todo .timeline-card { opacity: .7; }
+.timeline-item.is-done { --step-tone: #278052; --step-tint: color-mix(in srgb, #278052 11%, var(--surface)); }
+.timeline-item.is-current { --step-tone: #bd8611; --step-tint: color-mix(in srgb, #e4ad31 17%, var(--surface)); }
+.timeline-item.is-todo { --step-tone: #52798c; --step-tint: color-mix(in srgb, #52798c 9%, var(--surface)); }
+.timeline-item .timeline-dot { border-color: color-mix(in srgb, var(--step-tone) 55%, var(--line)); background: var(--step-tint); color: var(--step-tone); }
+.timeline-item .timeline-card { border-color: color-mix(in srgb, var(--step-tone) 36%, var(--line)); background: var(--step-tint); }
+.timeline-item .timeline-badge { background: color-mix(in srgb, var(--step-tone) 14%, var(--surface)); color: var(--step-tone); }
+.timeline-item.is-current .timeline-dot { border-color: var(--step-tone); background: var(--step-tone); color: #fff; }
+.timeline-item.is-todo .timeline-card { opacity: 1; }
 .finalization-panel .panel-head { margin-bottom: 1rem; }
 .yield-form { display: grid; grid-template-columns: minmax(180px, 320px) auto; align-items: end; gap: .8rem; }
 .yield-form label { gap: .4rem; }

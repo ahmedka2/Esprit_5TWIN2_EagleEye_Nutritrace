@@ -279,12 +279,16 @@ class AuthTest extends TestCase
         $transformateur = User::factory()->transformateur()->create(['email_verified_at' => now()]);
         $distributeur = User::factory()->distributeur()->create(['email_verified_at' => now()]);
 
-        foreach ([$admin, $producteur, $transformateur] as $proUser) {
+        foreach ([$admin, $producteur] as $proUser) {
             $response = $this->actingAs($proUser)->get('/admin');
             $response->assertStatus(200);
             $response->assertSee('Tableau de bord');
             $response->assertSee($proUser->role_label);
         }
+
+        // Transformateurs land on their transformations list.
+        $this->actingAs($transformateur)->get('/admin')
+            ->assertRedirect(route('transformations.index'));
 
         // Distributeurs have their own space and are sent there.
         $this->actingAs($distributeur)->get('/admin')
