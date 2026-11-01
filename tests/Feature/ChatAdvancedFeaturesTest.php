@@ -213,4 +213,28 @@ class ChatAdvancedFeaturesTest extends TestCase
         $response->assertSee(route('chat.index'));
         $response->assertSee(route('reponses-rapides.index'));
     }
+
+    public function test_consumer_cannot_access_or_manage_reponses_rapides(): void
+    {
+        $consumer = User::factory()->consommateur()->create();
+
+        // Consumer accessing index is redirected by pro middleware
+        $responseIndex = $this->actingAs($consumer)->get(route('reponses-rapides.index'));
+        $responseIndex->assertRedirect(route('home'));
+
+        // Consumer cannot create a quick reply
+        $responseStore = $this->actingAs($consumer)->post(route('reponses-rapides.store'), [
+            'titre' => 'Tentative consommateur',
+            'contenu' => 'Contenu non autorisé',
+        ]);
+        $responseStore->assertRedirect(route('home'));
+        $this->assertDatabaseMissing('reponses_rapides', [
+            'titre' => 'Tentative consommateur',
+        ]);
+
+        // In chat inbox, consumer does not see the quick replies management button
+        $responseInbox = $this->actingAs($consumer)->get(route('chat.index'));
+        $responseInbox->assertOk();
+        $responseInbox->assertDontSee(route('reponses-rapides.index'));
+    }
 }

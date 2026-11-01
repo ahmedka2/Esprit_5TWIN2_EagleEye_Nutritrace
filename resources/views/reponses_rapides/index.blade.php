@@ -1,12 +1,29 @@
-@extends('layouts.front')
+@extends($layout ?? 'layouts.front')
 
 @section('title', 'Modèles de Réponses Rapides')
 
 @section('content')
+@if (($layout ?? '') !== 'layouts.front')
+    <link rel="stylesheet" href="{{ asset('css/front.css') }}">
+    <style>
+        .shell .wrap.section {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+@endif
 <section class="wrap section">
     <div class="section-head" style="margin-bottom: 2rem;">
         <p class="mono lot-code">
-            <a href="{{ route('home') }}">Accueil</a> / 
+            @if (($layout ?? '') === 'layouts.producteur')
+                <a href="{{ route('producteur.dashboard') }}">Espace producteur</a> / 
+            @elseif (($layout ?? '') === 'layouts.admin')
+                <a href="{{ route('admin.dashboard') }}">Tableau de bord</a> / 
+            @else
+                <a href="{{ route('home') }}">Accueil</a> / 
+            @endif
             <a href="{{ route('chat.index') }}">Messagerie</a> / 
             Réponses Rapides
         </p>
@@ -38,7 +55,7 @@
         {{-- Formulaire d'ajout / création --}}
         <div style="background:var(--card-bg, #fff); border:1px solid var(--border, #e5e5e5); border-radius:12px; padding:1.5rem;">
             <h3 style="margin-top:0; font-size:1.15rem; display:flex; align-items:center; gap:.5rem;">
-                <span>⚡</span> Nouveau Modèle
+                Nouveau Modèle
             </h3>
             <p class="muted" style="font-size:.85rem; margin-bottom:1.25rem;">
                 Ce texte pourra être inséré directement dans la zone de saisie du chat.

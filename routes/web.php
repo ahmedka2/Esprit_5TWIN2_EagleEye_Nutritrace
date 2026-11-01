@@ -237,6 +237,9 @@ Route::resource('produits-finaux', ProduitFinalController::class)
 
 Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified', 'producteur'])->group(function () {
     Route::get('/', [ProducteurController::class, 'index'])->name('dashboard');
+    Route::get('matieres-premieres/{matierePremiere}/historique/pdf', [MatierePremiereController::class, 'historiquePdf'])->name('matieres-premieres.historique-pdf');
+    Route::get('matieres-premieres/{matierePremiere}/historique', [MatierePremiereController::class, 'historique'])->name('matieres-premieres.historique');
+    Route::post('matieres-premieres/ai-prefill', [MatierePremiereController::class, 'aiPrefill'])->name('matieres-premieres.ai-prefill');
     Route::resource('matieres-premieres', MatierePremiereController::class)
         ->parameters(['matieres-premieres' => 'matierePremiere']);
 });
@@ -245,6 +248,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'not-dis
     Route::resource('categories', CategorieController::class)
         ->parameters(['categories' => 'categorie']);
     Route::resource('certifications', CertificationController::class);
+    Route::get('matieres-premieres/{matierePremiere}/historique/pdf', [MatierePremiereController::class, 'historiquePdf'])->name('matieres-premieres.historique-pdf');
+    Route::get('matieres-premieres/{matierePremiere}/historique', [MatierePremiereController::class, 'historique'])->name('matieres-premieres.historique');
+    Route::post('matieres-premieres/ai-prefill', [MatierePremiereController::class, 'aiPrefill'])->name('matieres-premieres.ai-prefill');
     Route::resource('matieres-premieres', MatierePremiereController::class)
         ->parameters(['matieres-premieres' => 'matierePremiere']);
 });

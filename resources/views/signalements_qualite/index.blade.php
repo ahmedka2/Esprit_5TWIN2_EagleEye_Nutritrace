@@ -194,7 +194,7 @@
                 <label for="sort" style="display:block; font-size:.78rem; font-weight:600; margin-bottom:.3rem;">Tri Priorité IA</label>
                 <select id="sort" name="sort" class="sq-select">
                     <option value="">Priorité standard</option>
-                    <option value="ai_risque" @selected(request('sort') === 'ai_risque')>🤖 Risque IA décroissant</option>
+                    <option value="ai_risque" @selected(request('sort') === 'ai_risque')>Risque IA décroissant</option>
                 </select>
             </div>
 
@@ -243,7 +243,7 @@
                                     <span>{{ $sBadge['icon'] }}</span> {{ $sBadge['label'] }}
                                 </span>
                                 <span class="sq-badge mono" style="background:{{ $aiBadge['bg'] }}; color:{{ $aiBadge['color'] }}; border-color:{{ $aiBadge['border'] }};" title="Modèle : {{ $sig->ai_model_used }}">
-                                    🤖 {{ $aiBadge['label'] }}
+                                    {{ $aiBadge['label'] }}
                                 </span>
                                 <span class="mono muted" style="font-size:.78rem;">
                                     Lot saisi : <strong>{{ $sig->code_lot_saisi }}</strong>

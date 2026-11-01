@@ -1,11 +1,30 @@
-@extends('layouts.front')
+@extends($layout ?? 'layouts.front')
 
 @section('title', 'Messagerie')
 
 @section('content')
+@if (($layout ?? '') !== 'layouts.front')
+    <link rel="stylesheet" href="{{ asset('css/front.css') }}">
+    <style>
+        .shell .wrap.section {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+@endif
 <section class="wrap section">
     <div class="section-head" style="margin-bottom: 2rem;">
-        <p class="mono lot-code"><a href="{{ route('home') }}">Accueil</a> / Messagerie</p>
+        <p class="mono lot-code">
+            @if (($layout ?? '') === 'layouts.producteur')
+                <a href="{{ route('producteur.dashboard') }}">Espace producteur</a> / Messagerie
+            @elseif (($layout ?? '') === 'layouts.admin')
+                <a href="{{ route('admin.dashboard') }}">Tableau de bord</a> / Messagerie
+            @else
+                <a href="{{ route('home') }}">Accueil</a> / Messagerie
+            @endif
+        </p>
         <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:1.25rem; flex-wrap:wrap;">
             <div>
                 <h1>Messagerie Directe</h1>
@@ -21,9 +40,11 @@
                         ⚙️ Tableau de bord
                     </a>
                 @endif
-                <a href="{{ route('reponses-rapides.index') }}" class="btn-fav" style="text-decoration:none; font-size:.85rem; padding:.45rem .85rem;">
-                    ⚡ Réponses rapides
-                </a>
+                @if (auth()->user()?->isPro())
+                    <a href="{{ route('reponses-rapides.index') }}" class="btn-fav" style="text-decoration:none; font-size:.85rem; padding:.45rem .85rem;">
+                        Réponses rapides
+                    </a>
+                @endif
             </div>
         </div>
     </div>
@@ -54,11 +75,21 @@
         <div class="empty" style="margin-top: 1rem;">
             <h3>{{ $currentView === 'archives' ? 'Aucune conversation archivée' : 'Aucun message pour le moment' }}</h3>
             <p class="muted" style="margin-top: .5rem; margin-bottom: 1.5rem;">
-                {{ $currentView === 'archives' ? 'Les conversations que vous archivez s\'afficheront ici.' : 'Vous n\'avez pas encore de conversation en cours. Consultez une fiche produit pour poser une question directe à son producteur.' }}
+                {{ $currentView === 'archives' ? 'Les conversations que vous archivez s\'afficheront ici.' : (auth()->user()?->isProducteur() ? 'Vous n\'avez pas encore reçu de question de consommateur. Les nouveaux messages concernant vos lots apparaîtront ici.' : 'Vous n\'avez pas encore de conversation en cours. Consultez une fiche produit pour poser une question directe à son producteur.') }}
             </p>
-            <a href="{{ route('home') }}#produits" class="btn" style="text-decoration:none; display:inline-block;">
-                Découvrir les produits
-            </a>
+            @if (auth()->user()?->isProducteur())
+                <a href="{{ route('producteur.dashboard') }}" class="btn" style="text-decoration:none; display:inline-block;">
+                    Retour au tableau de bord producteur
+                </a>
+            @elseif (auth()->user()?->isAdmin() || auth()->user()?->isTransformateur())
+                <a href="{{ route('admin.dashboard') }}" class="btn" style="text-decoration:none; display:inline-block;">
+                    Retour au tableau de bord pro
+                </a>
+            @else
+                <a href="{{ route('home') }}#produits" class="btn" style="text-decoration:none; display:inline-block;">
+                    Découvrir les produits
+                </a>
+            @endif
         </div>
     @else
         <ul class="conversation-list">

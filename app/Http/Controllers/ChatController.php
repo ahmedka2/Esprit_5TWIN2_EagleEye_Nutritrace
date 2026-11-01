@@ -69,6 +69,7 @@ class ChatController extends Controller
             'activeCount' => $activeConversations->count(),
             'archiveCount' => $archivedConversations->count(),
             'currentView' => $viewFilter,
+            'layout' => $this->resolveLayout($request->user()),
         ]);
     }
 
@@ -90,16 +91,20 @@ class ChatController extends Controller
             ->with(['sender', 'receiver'])
             ->get();
 
-        // Producer quick replies if the user has any
-        $reponsesRapides = $authUser->reponsesRapides()->orderBy('titre')->get();
-
-        // Smart Reply IA (Similarité Cosinus — Xenova/multilingual-e5-small)
+        // Producer quick replies if the user is a pro
+        $reponsesRapides = collect();
         $smartReplies = [];
-        if ($reponsesRapides->isNotEmpty()) {
-            $lastIncoming = $messages->where('sender_id', $interlocutor->id)->where('deleted_by_sender', false)->last();
-            $contextText = $lastIncoming?->message ?? ($produitFinal->nom . ' bio origine magasin');
-            $smartAnalysis = $aiService->suggestQuickReplies($contextText, $reponsesRapides, 2);
-            $smartReplies = $smartAnalysis['suggestions'];
+
+        if ($authUser->isPro()) {
+            $reponsesRapides = $authUser->reponsesRapides()->orderBy('titre')->get();
+
+            // Smart Reply IA (Similarité Cosinus — Xenova/multilingual-e5-small)
+            if ($reponsesRapides->isNotEmpty()) {
+                $lastIncoming = $messages->where('sender_id', $interlocutor->id)->where('deleted_by_sender', false)->last();
+                $contextText = $lastIncoming?->message ?? ($produitFinal->nom . ' bio origine magasin');
+                $smartAnalysis = $aiService->suggestQuickReplies($contextText, $reponsesRapides, 2);
+                $smartReplies = $smartAnalysis['suggestions'];
+            }
         }
 
         // Predefined contact topics / motifs
@@ -118,6 +123,7 @@ class ChatController extends Controller
             'smartReplies' => $smartReplies,
             'motifs' => $motifs,
             'isArchived' => $isArchived,
+            'layout' => $this->resolveLayout($authUser),
         ]);
     }
 
@@ -314,5 +320,25 @@ class ChatController extends Controller
         }
 
         return back()->with('status', $msg);
+    }
+
+    /**
+     * Resolve the appropriate layout depending on the user's role.
+     */
+    private function resolveLayout(?User $user): string
+    {
+        if (! $user) {
+            return 'layouts.front';
+        }
+
+        if ($user->isAdmin() || $user->isTransformateur() || $user->isDistributeur()) {
+            return 'layouts.admin';
+        }
+
+        if ($user->isProducteur()) {
+            return 'layouts.producteur';
+        }
+
+        return 'layouts.front';
     }
 }

@@ -134,7 +134,7 @@
                                 <div style="margin-bottom:.4rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.35rem;">
                                     <label style="font-size:.75rem;">Note / Étoiles :</label>
                                     <button type="button" onclick="predictStarsWithAi({{ $fav->id }})" style="background:rgba(46,125,79,0.1); border:1px solid var(--fern, #2E7D4F); color:var(--fern, #2E7D4F); border-radius:999px; font-size:.7rem; padding:.12rem .55rem; cursor:pointer; font-weight:600;">
-                                        🤖 Auto-étoiles IA
+                                        Estimer la note
                                     </button>
                                 </div>
                                 <div style="margin-bottom:.4rem;">
@@ -279,7 +279,7 @@ function predictStarsWithAi(favId) {
         if (data.success && data.rating) {
             if (selectEl) selectEl.value = String(data.rating);
             if (infoEl) {
-                infoEl.textContent = `✨ ${data.label} — Prédiction : ${data.model_id}`;
+                infoEl.textContent = `${data.label} — Prédiction : ${data.model_id}`;
             }
         }
     })

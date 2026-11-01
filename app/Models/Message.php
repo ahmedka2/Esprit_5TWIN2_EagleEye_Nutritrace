@@ -75,7 +75,7 @@ class Message extends Model
 
         if ($sentiment === 'urgent' || $urgence >= 75) {
             return [
-                'label' => 'Urgent 🔴',
+                'label' => 'Urgent',
                 'color' => '#991b1b',
                 'bg' => '#fef2f2',
                 'border' => '#f87171',
@@ -84,7 +84,7 @@ class Message extends Model
 
         if ($sentiment === 'negatif') {
             return [
-                'label' => 'Alerte / Négatif 🔴',
+                'label' => 'Alerte',
                 'color' => '#9a3412',
                 'bg' => '#fff7ed',
                 'border' => '#fdba74',
@@ -93,7 +93,7 @@ class Message extends Model
 
         if ($sentiment === 'positif') {
             return [
-                'label' => 'Positif 🟢',
+                'label' => 'Positif',
                 'color' => '#166534',
                 'bg' => '#f0fdf4',
                 'border' => '#86efac',
@@ -101,7 +101,7 @@ class Message extends Model
         }
 
         return [
-            'label' => 'Question 🟡',
+            'label' => 'Question',
             'color' => '#854d0e',
             'bg' => '#fefce8',
             'border' => '#fde047',

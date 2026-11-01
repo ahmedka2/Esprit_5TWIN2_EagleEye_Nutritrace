@@ -15,9 +15,14 @@ class ReponseRapideController extends Controller
      */
     public function index(Request $request): View
     {
+        $this->authorizePro($request);
+
         $reponses = $request->user()->reponsesRapides()->latest()->get();
 
-        return view('reponses_rapides.index', compact('reponses'));
+        return view('reponses_rapides.index', [
+            'reponses' => $reponses,
+            'layout' => $this->resolveLayout($request->user()),
+        ]);
     }
 
     /**
@@ -25,6 +30,7 @@ class ReponseRapideController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
+        $this->authorizePro($request);
         $validated = $request->validate([
             'titre' => ['required', 'string', 'max:100'],
             'contenu' => ['required', 'string', 'max:2000'],
@@ -52,6 +58,8 @@ class ReponseRapideController extends Controller
      */
     public function update(Request $request, ReponseRapide $reponseRapide): RedirectResponse|JsonResponse
     {
+        $this->authorizePro($request);
+
         if ($reponseRapide->user_id !== $request->user()->id) {
             abort(403, 'Action non autorisée.');
         }
@@ -80,6 +88,8 @@ class ReponseRapideController extends Controller
      */
     public function destroy(Request $request, ReponseRapide $reponseRapide): RedirectResponse|JsonResponse
     {
+        $this->authorizePro($request);
+
         if ($reponseRapide->user_id !== $request->user()->id) {
             abort(403, 'Action non autorisée.');
         }
@@ -101,11 +111,43 @@ class ReponseRapideController extends Controller
      */
     public function apiList(Request $request): JsonResponse
     {
+        $this->authorizePro($request);
+
         $reponses = $request->user()->reponsesRapides()->orderBy('titre')->get(['id', 'titre', 'contenu', 'raccourci']);
 
         return response()->json([
             'success' => true,
             'reponses' => $reponses,
         ]);
+    }
+
+    /**
+     * Ensure the authenticated user has professional or administrative privileges.
+     */
+    private function authorizePro(Request $request): void
+    {
+        if (! $request->user()?->isPro()) {
+            abort(403, 'Accès réservé aux professionnels et administrateurs.');
+        }
+    }
+
+    /**
+     * Resolve the appropriate layout depending on the user's role.
+     */
+    private function resolveLayout(?\App\Models\User $user): string
+    {
+        if (! $user) {
+            return 'layouts.front';
+        }
+
+        if ($user->isAdmin() || $user->isTransformateur() || $user->isDistributeur()) {
+            return 'layouts.admin';
+        }
+
+        if ($user->isProducteur()) {
+            return 'layouts.producteur';
+        }
+
+        return 'layouts.front';
     }
 }

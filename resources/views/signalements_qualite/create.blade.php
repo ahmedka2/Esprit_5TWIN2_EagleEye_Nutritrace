@@ -187,14 +187,13 @@
         <div id="ai-diagnostic-box" style="margin-bottom: 1.75rem; background: linear-gradient(135deg, rgba(46,125,79,0.06), rgba(30,64,175,0.05)); border: 1.5px solid var(--fern, #2E7D4F); border-radius: 12px; padding: 1.25rem 1.4rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:.75rem;">
                 <div style="display:flex; align-items:center; gap:.55rem;">
-                    <span style="font-size:1.3rem;">🤖</span>
                     <div>
                         <strong style="font-size:.96rem; display:block;">Diagnostic IA Embarqué (Pré-analyse Sanitaire & Vision ONNX)</strong>
                         <span class="muted" style="font-size:.78rem;">Classification automatique de l'anomalie, estimation de la gravité et calcul du score de risque</span>
                     </div>
                 </div>
                 <button type="button" id="btn-run-ai-signalement" onclick="triggerAiSignalementAnalysis()" class="btn" style="padding:.4rem .95rem; font-size:.8rem; border-radius:999px;">
-                    ✨ Analyser avec l'IA
+                    Analyser avec l'IA
                 </button>
             </div>
 
@@ -278,7 +277,7 @@ function triggerAiSignalementAnalysis() {
     })
     .then(res => res.json())
     .then(res => {
-        if (btn) btn.textContent = '✨ Analyser avec l\'IA';
+        if (btn) btn.textContent = 'Analyser avec l\'IA';
         if (!res.success || !res.data) return;
 
         const d = res.data;
@@ -316,7 +315,7 @@ function triggerAiSignalementAnalysis() {
         if (resultBox) resultBox.style.display = 'block';
     })
     .catch(() => {
-        if (btn) btn.textContent = '✨ Analyser avec l\'IA';
+        if (btn) btn.textContent = 'Analyser avec l\'IA';
     });
 }
 
