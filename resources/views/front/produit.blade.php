@@ -84,7 +84,7 @@
                 <tbody>
                 @foreach ($t->empreintes as $em)
                     <tr>
-                        <td>{{ \App\Models\Transformation::labelEtape($t->etapes[$em->etape]['nom'] ?? '') }}</td>
+                        <td>{{ \App\Models\Transformation::labelEtape($t->etapes[$em->etape]['nom'] ?? '') }} @if ($em->estime_par_ia) <span class="ai-tag" title="Valeur estimée par IA puis validée par le transformateur, non mesurée">estimation IA</span> @endif</td>
                         <td class="num mono">{{ number_format($em->co2_kg, 2, ',', ' ') }}</td>
                         <td class="num mono">{{ number_format($em->eau_litres, 0, ',', ' ') }}</td>
                         <td class="num mono">{{ $empreinte['co2_kg'] ? round($em->co2_kg / $empreinte['co2_kg'] * 100) : 0 }} %</td>
