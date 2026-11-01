@@ -25,13 +25,17 @@ class TraceabilityCrudTest extends TestCase
         $category = Categorie::factory()->create();
         $certification = Certification::factory()->create();
 
-        foreach (['admin', 'producteur', 'transformateur', 'distributeur', 'consommateur'] as $role) {
+        foreach (['admin', 'producteur', 'transformateur', 'consommateur'] as $role) {
             $user = User::factory()->state(['role' => $role])->create();
 
             $this->actingAs($user)->get(route('admin.categories.index'))->assertOk();
             $this->actingAs($user)->get(route('admin.categories.show', $category))->assertOk();
             $this->actingAs($user)->get(route('admin.certifications.show', $certification))->assertOk();
         }
+
+        $distributeur = User::factory()->state(['role' => 'distributeur'])->create();
+        $this->actingAs($distributeur)->get(route('admin.categories.index'))
+            ->assertRedirect(route('distributeur.dashboard'));
     }
 
     public function test_only_admin_can_manage_categories_and_certifications(): void

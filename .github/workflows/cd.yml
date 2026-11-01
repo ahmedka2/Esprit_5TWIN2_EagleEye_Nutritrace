@@ -1,0 +1,30 @@
+name: CD
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: self-hosted # the GitHub runner installed on the local VM
+    permissions:
+      contents: read
+      packages: read # pull the private image from GHCR
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull and restart
+        run: |
+          mkdir -p ~/nutritrace
+          cp -r docker-compose.yml monitoring ~/nutritrace/
+          cd ~/nutritrace
+          docker compose pull
+          docker compose up -d
+          docker image prune -f

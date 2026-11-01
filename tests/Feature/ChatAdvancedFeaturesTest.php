@@ -218,16 +218,15 @@ class ChatAdvancedFeaturesTest extends TestCase
     {
         $consumer = User::factory()->consommateur()->create();
 
-        // Consumer accessing index is redirected by pro middleware
-        $responseIndex = $this->actingAs($consumer)->get(route('reponses-rapides.index'));
-        $responseIndex->assertRedirect(route('home'));
+        // Consumer accessing index is forbidden by the controller
+        $this->actingAs($consumer)->get(route('reponses-rapides.index'))->assertForbidden();
 
         // Consumer cannot create a quick reply
         $responseStore = $this->actingAs($consumer)->post(route('reponses-rapides.store'), [
             'titre' => 'Tentative consommateur',
             'contenu' => 'Contenu non autorisé',
         ]);
-        $responseStore->assertRedirect(route('home'));
+        $responseStore->assertForbidden();
         $this->assertDatabaseMissing('reponses_rapides', [
             'titre' => 'Tentative consommateur',
         ]);

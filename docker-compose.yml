@@ -1,0 +1,64 @@
+# Production stack: app + MySQL + Prometheus + Grafana.
+# Needs a .env next to this file (copy of .env.example with real APP_KEY, DB_* , GRAFANA_PASSWORD).
+services:
+  app:
+    image: ghcr.io/ahmedka2/nutritrace:latest
+    env_file: .env
+    environment:
+      DB_HOST: db
+    ports: ["8000:80"]
+    command: sh -c "php artisan migrate --force && apache2-foreground"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes: [db:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    volumes: [./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro]
+    ports: ["9090:9090"]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - grafana:/var/lib/grafana
+    ports: ["3000:3000"]
+    restart: unless-stopped
+
+  node-exporter: # host CPU / RAM / disk
+    image: prom/node-exporter:v1.8.2
+    command: --path.rootfs=/host
+    pid: host
+    volumes: ["/:/host:ro,rslave"]
+    restart: unless-stopped
+
+  cadvisor: # per-container CPU / RAM
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+
+volumes:
+  db:
+  grafana:
