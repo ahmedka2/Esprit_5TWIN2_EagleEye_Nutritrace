@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Middleware\EnsureUserIsPro;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureUserIsDistributeur;
+use App\Http\Middleware\EnsureUserIsNotDistributeur;
+use App\Http\Middleware\EnsureUserIsPro;
 use App\Http\Middleware\EnsureUserIsProducteur;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -23,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'pro' => EnsureUserIsPro::class,
             'admin' => EnsureUserIsAdmin::class,
             'producteur' => EnsureUserIsProducteur::class,
+            'distributeur' => EnsureUserIsDistributeur::class,
+            'not-distributeur' => EnsureUserIsNotDistributeur::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

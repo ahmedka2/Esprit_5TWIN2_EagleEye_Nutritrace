@@ -1,9 +1,9 @@
-@extends('layouts.admin')
+@extends($layout)
 
 @section('title', 'Véhicules')
 
 @section('actions')
-    <a class="btn" href="{{ route('admin.vehicules.create') }}">Ajouter un véhicule</a>
+    <a class="btn" href="{{ route($routePrefix.'.vehicules.create') }}">Ajouter un véhicule</a>
 @endsection
 
 @section('content')
@@ -23,10 +23,10 @@
                 <td><span class="tag">{{ $vehicule->refrigere ? 'Réfrigéré' : 'Standard' }}</span></td>
                 <td class="num mono">{{ $vehicule->emission_co2_km !== null ? number_format((float) $vehicule->emission_co2_km, 2, ',', ' ') : '—' }}</td>
                 <td><strong>{{ $vehicule->livraisons_count }}</strong><span class="muted small"> {{ $vehicule->livraisons_count > 1 ? 'livraisons' : 'livraison' }}</span></td>
-                <td class="row-actions"><a href="{{ route('admin.vehicules.show', $vehicule) }}"><x-icon name="eye" /> Voir</a><a href="{{ route('admin.vehicules.edit', $vehicule) }}"><x-icon name="pencil" /> Modifier</a></td>
+                <td class="row-actions"><a href="{{ route($routePrefix.'.vehicules.show', $vehicule) }}"><x-icon name="eye" /> Voir</a><a href="{{ route($routePrefix.'.vehicules.edit', $vehicule) }}"><x-icon name="pencil" /> Modifier</a></td>
             </tr>
         @empty
-            <tr><td colspan="6" class="empty">Aucun véhicule. <a href="{{ route('admin.vehicules.create') }}">Ajoutez le premier</a>.</td></tr>
+            <tr><td colspan="6" class="empty">Aucun véhicule. <a href="{{ route($routePrefix.'.vehicules.create') }}">Ajoutez le premier</a>.</td></tr>
         @endforelse
         </tbody>
     </table>

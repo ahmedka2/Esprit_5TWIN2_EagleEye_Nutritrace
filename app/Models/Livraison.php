@@ -10,6 +10,7 @@ class Livraison extends Model
     protected $fillable = [
         'user_id',
         'vehicule_id',
+        'produit_final_id',
         'depart',
         'arrivee',
         'date_depart',
@@ -37,5 +38,10 @@ class Livraison extends Model
     public function vehicule(): BelongsTo
     {
         return $this->belongsTo(Vehicule::class);
+    }
+
+    public function produitFinal(): BelongsTo
+    {
+        return $this->belongsTo(ProduitFinal::class);
     }
 }

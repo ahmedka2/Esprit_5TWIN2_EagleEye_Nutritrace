@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends($layout)
 
 @section('title', $vehicule->exists ? 'Modifier le véhicule' : 'Ajouter un véhicule')
 
@@ -6,7 +6,7 @@
 @php
     preg_match('/^(\d{1,4})\s+TUN\s+(\d{1,4})$/i', (string) $vehicule->immatriculation, $matricule);
 @endphp
-<form class="form" method="post" action="{{ $vehicule->exists ? route('admin.vehicules.update', $vehicule) : route('admin.vehicules.store') }}" novalidate>
+<form class="form" method="post" action="{{ $vehicule->exists ? route($routePrefix.'.vehicules.update', $vehicule) : route($routePrefix.'.vehicules.store') }}" novalidate>
     @csrf
     @if ($vehicule->exists) @method('PUT') @endif
 
@@ -51,7 +51,7 @@
     </fieldset>
 
     <div class="form-actions">
-        <a href="{{ $vehicule->exists ? route('admin.vehicules.show', $vehicule) : route('admin.vehicules.index') }}">Annuler</a>
+        <a href="{{ $vehicule->exists ? route($routePrefix.'.vehicules.show', $vehicule) : route($routePrefix.'.vehicules.index') }}">Annuler</a>
         <button class="btn" type="submit">{{ $vehicule->exists ? 'Enregistrer les modifications' : 'Ajouter le véhicule' }}</button>
     </div>
 </form>
