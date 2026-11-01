@@ -64,6 +64,39 @@ document.querySelector('#final-photo-input')?.addEventListener('change', event =
     @endforeach
     </ol>
 </section>
+<script>
+// AI estimate: fills the step's CO₂/eau fields; the flag drops as soon as a value is edited by hand
+document.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-estimer]');
+    if (!button) return;
+    const form = button.closest('form');
+    const hint = form.querySelector('.ai-hint');
+    button.disabled = true;
+    hint.hidden = false;
+    hint.classList.remove('is-error');
+    hint.textContent = 'Estimation en cours…';
+    try {
+        const response = await fetch(button.dataset.estimer, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': form.querySelector('[name=_token]').value },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || 'Estimation IA indisponible.');
+        form.co2_kg.value = data.co2_kg;
+        form.eau_litres.value = data.eau_litres;
+        form.estime_par_ia.value = '1';
+        hint.textContent = `Estimation IA : ${data.raison} Vérifiez les valeurs avant de terminer l’étape.`;
+    } catch (error) {
+        hint.classList.add('is-error');
+        hint.textContent = error.message;
+    } finally {
+        button.disabled = false;
+    }
+});
+document.addEventListener('input', (event) => {
+    if (event.target.matches('[name=co2_kg], [name=eau_litres]')) event.target.form.estime_par_ia.value = '0';
+});
+</script>
 @if ($transformation->statut === 'en_cours' && $transformation->toutesEtapesCompletes())
 <section class="panel"><h2>Finaliser</h2><form method="POST" action="{{ route('transformations.finaliser',$transformation) }}" class="form">@csrf<label>Rendement obtenu (%)<input type="number" name="rendement" min="0.01" max="100" step="0.01" value="{{ $transformation->expected_yield_percent ?? '' }}" required></label><label>Nom du produit final<input name="nom_produit_final" value="{{ $transformation->nom_produit_final }}" required></label><button class="btn">Finaliser la transformation</button></form></section>
 @endif

@@ -39,6 +39,8 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
     volumes:
       - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/nutritrace.yml:ro
+      - ./monitoring/dashboards:/etc/grafana/dashboards:ro
       - grafana:/var/lib/grafana
     ports: ["3000:3000"]
     restart: unless-stopped
@@ -50,13 +52,19 @@ services:
     volumes: ["/:/host:ro,rslave"]
     restart: unless-stopped
 
-  cadvisor: # per-container CPU / RAM
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+  cadvisor: # per-container CPU / RAM (v0.55+ needed for Docker 29's containerd image store)
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    privileged: true
+    devices: ["/dev/kmsg"]
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+
+  blackbox: # probes the app over HTTP: up/down, response time, status code
+    image: prom/blackbox-exporter:v0.25.0
     restart: unless-stopped
 
 volumes:
