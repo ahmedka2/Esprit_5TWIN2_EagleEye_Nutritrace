@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureUserIsDistributeur;
 use App\Http\Middleware\EnsureUserIsNotDistributeur;
 use App\Http\Middleware\EnsureUserIsPro;
 use App\Http\Middleware\EnsureUserIsProducteur;
+use App\Http\Middleware\EnsureCanManageTransformations;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'producteur' => EnsureUserIsProducteur::class,
             'distributeur' => EnsureUserIsDistributeur::class,
             'not-distributeur' => EnsureUserIsNotDistributeur::class,
+            'transformateur' => EnsureCanManageTransformations::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -17,6 +17,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReponseRapideController;
 use App\Http\Controllers\SignalementQualiteController;
 use App\Http\Controllers\TransformationController;
+use App\Http\Controllers\AiTransformationController;
 use App\Http\Controllers\VehiculeController;
 use App\Models\Message;
 use App\Models\EmpreinteEnvironnementale;
@@ -155,7 +156,13 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro', 'not-distributeur'])->group(function () {
-    Route::get('/', fn () => view('admin.dashboard', ['produits' => produits(), 'ratesOuverts' => Rate::where('statut', 'ouvert')->count()]))->name('dashboard');
+    Route::get('/', function () {
+        if (request()->user()->isTransformateur()) {
+            return redirect()->route('transformations.index');
+        }
+
+        return view('admin.dashboard', ['produits' => produits(), 'ratesOuverts' => Rate::where('statut', 'ouvert')->count()]);
+    })->name('dashboard');
 
     Route::get('/signalements', function () {
         $rates = Rate::with('user', 'produitFinal')->when(request('statut'), fn ($q, $s) => $q->where('statut', $s))
@@ -183,6 +190,11 @@ Route::prefix('distributeur')->name('distributeur.')->middleware(['auth', 'verif
     Route::resource('livraisons', LivraisonController::class);
 });
 
+Route::middleware(['auth', 'verified', 'transformateur'])->group(function () {
+Route::get('/transformations/planifier', [AiTransformationController::class, 'create'])->name('transformations.ai.create');
+Route::post('/transformations/planifier', [AiTransformationController::class, 'generate'])->middleware('throttle:5,1')->name('transformations.ai.generate');
+Route::get('/transformations/verifier-plan', [AiTransformationController::class, 'review'])->name('transformations.ai.review');
+Route::post('/transformations/enregistrer-plan', [AiTransformationController::class, 'store'])->name('transformations.ai.store');
 Route::resource('transformations', TransformationController::class);
 Route::prefix('transformations')->name('transformations.')->group(function () {
     Route::post('/{transformation}/etape/{index}/estimer', function (Transformation $transformation, int $index) {
@@ -213,9 +225,15 @@ Route::prefix('transformations')->name('transformations.')->group(function () {
         [TransformationController::class, 'finaliser']
     )
         ->name('finaliser');
+    Route::post('/{transformation}/etapes/{index}/executer', [TransformationController::class, 'executerEtape'])->name('etape.executer');
+    Route::patch('/{transformation}/etapes/{index}', [TransformationController::class, 'modifierEtapeTerminee'])->name('etape.update');
+    Route::post('/{transformation}/photo', [TransformationController::class, 'photo'])->name('photo');
+    Route::get('/{transformation}/pdf', [TransformationController::class, 'pdf'])->name('pdf');
 });
+Route::get('/produits-finaux/{produitFinal}/telecharger', [ProduitFinalController::class, 'download'])->name('produits-finaux.download');
 Route::resource('produits-finaux', ProduitFinalController::class)
     ->parameters(['produits-finaux' => 'produitFinal']);
+});
 
 Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified', 'producteur'])->group(function () {
     Route::get('/', [ProducteurController::class, 'index'])->name('dashboard');

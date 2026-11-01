@@ -5,17 +5,37 @@ namespace App\Http\Controllers;
 use App\Models\ProduitFinal;
 use App\Models\Transformation;
 use App\Http\Requests\ProduitFinalRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProduitFinalController extends Controller
 {
     //
-    public function index()
+    public function index(Request $request)
     {
-        $produits = ProduitFinal::with('transformation.empreintes')
-            ->latest()
-            ->paginate(10);
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:255'],
+            'statut' => ['nullable', 'in:disponible,reserve,expedie'],
+            'date_debut' => ['nullable', 'date'],
+            'date_fin' => ['nullable', 'date', 'after_or_equal:date_debut'],
+            'peremption' => ['nullable', 'in:valide,expire,sans_date'],
+        ]);
+        $query = ProduitFinal::with('transformation.empreintes');
+        if (! empty($filters['q'])) {
+            $term = trim($filters['q']);
+            $query->where(fn ($builder) => $builder->where('nom', 'like', "%{$term}%")
+                ->orWhere('code', 'like', "%{$term}%")
+                ->orWhereHas('transformation', fn ($transformation) => $transformation->where('reference', 'like', "%{$term}%")));
+        }
+        if (! empty($filters['statut'])) $query->where('statut', $filters['statut']);
+        if (! empty($filters['date_debut'])) $query->whereDate('date_production', '>=', $filters['date_debut']);
+        if (! empty($filters['date_fin'])) $query->whereDate('date_production', '<=', $filters['date_fin']);
+        if (($filters['peremption'] ?? null) === 'valide') $query->whereDate('date_peremption', '>=', today());
+        if (($filters['peremption'] ?? null) === 'expire') $query->whereNotNull('date_peremption')->whereDate('date_peremption', '<', today());
+        if (($filters['peremption'] ?? null) === 'sans_date') $query->whereNull('date_peremption');
+        $produits = $query->latest()->paginate(12)->withQueryString();
 
-        return view('produits_finaux.index', compact('produits'));
+        return view('produits_finaux.index', compact('produits', 'filters'));
     }
 
     public function create()
@@ -26,7 +46,8 @@ class ProduitFinalController extends Controller
             ->latest('date_fin')
             ->get();
 
-        return view('produits_finaux.create', compact('transformations'));
+        $selectedTransformation = $transformations->firstWhere('id', request('transformation_id'));
+        return view('produits_finaux.create', compact('transformations', 'selectedTransformation'));
     }
 
     public function store(ProduitFinalRequest $request)
@@ -41,6 +62,7 @@ class ProduitFinalController extends Controller
         $transformation->produitFinal()->create([
             'code'            => ProduitFinal::genererCode(),
             'nom'             => $validated['nom'],
+            'user_id'         => $request->user()->id,
             'quantite'        => $validated['quantite'],
             'unite'           => $validated['unite'],
             'date_production' => $validated['date_production'],
@@ -57,6 +79,14 @@ class ProduitFinalController extends Controller
         $produitFinal->load('transformation');
 
         return view('produits_finaux.show', compact('produitFinal'));
+    }
+
+    public function download(ProduitFinal $produitFinal)
+    {
+        $produitFinal->load('transformation');
+        abort_unless(class_exists(\Barryvdh\DomPDF\Facade\Pdf::class), 503);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('produits_finaux.pdf', compact('produitFinal'))->setPaper('a4');
+        return $pdf->download('fiche-produit-'.$produitFinal->code.'.pdf');
     }
     public function edit(ProduitFinal $produitFinal)
     {

@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Transformation extends Model
 {
+    use HasFactory;
+
     //
     protected $fillable = [
         'reference',
@@ -24,6 +27,9 @@ class Transformation extends Model
         'statut',
         'date_debut',
         'date_fin',
+        'original_request', 'ai_plan_raw', 'planned_start', 'planned_end',
+        'expected_yield_percent', 'suggested_shelf_life_days', 'final_photo_path',
+        'validated_by', 'validated_at',
     ];
     protected $casts = [
         'etapes' => 'array',
@@ -31,6 +37,12 @@ class Transformation extends Model
         'date_fin' => 'datetime',
         'rendement' => 'decimal:2',
         'quantite_utilisee' => 'decimal:2',
+        'ai_plan_raw' => 'array',
+        'planned_start' => 'datetime',
+        'planned_end' => 'datetime',
+        'expected_yield_percent' => 'decimal:2',
+        'suggested_shelf_life_days' => 'integer',
+        'validated_at' => 'datetime',
     ];
 
     public function produitFinal(): HasOne
@@ -51,6 +63,11 @@ class Transformation extends Model
     public function matierePremiere(): BelongsTo
     {
         return $this->belongsTo(MatierePremiere::class, 'matiere_premiere_id');
+    }
+
+    public function validatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'validated_by');
     }
 
     public function toutesEtapesCompletes(): bool

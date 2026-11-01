@@ -5,8 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Transformation;
 use App\Models\MatierePremiere;
 use Illuminate\Http\Request;
+<<<<<<< HEAD
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+=======
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+>>>>>>> origin/main
 
 class TransformationController extends Controller
 {
@@ -78,6 +84,7 @@ class TransformationController extends Controller
     public function show(Transformation $transformation)
     {
         //
+        $transformation->load('produitFinal');
         return view('transformations.show', compact('transformation'));
     }
 
@@ -163,7 +170,7 @@ class TransformationController extends Controller
     
     public function lancer(Transformation $transformation)
     {
-        if ($transformation->statut !== 'brouillon') {
+        if (! in_array($transformation->statut, ['brouillon', 'planifiee'], true)) {
             return back()->with('error', 'Cette transformation est déjà lancée.');
         }
 
@@ -172,6 +179,7 @@ class TransformationController extends Controller
         // La 1ère étape passe en cours
         if (!empty($etapes)) {
             $etapes[0]['statut'] = 'en_cours';
+            $etapes[0]['debut_reel'] = now()->toIso8601String();
         }
 
         $transformation->update([
@@ -182,6 +190,108 @@ class TransformationController extends Controller
         ]);
 
         return back()->with('success', 'Transformation lancée.');
+    }
+
+    public function executerEtape(Request $request, Transformation $transformation, int $index)
+    {
+        abort_unless($transformation->statut === 'en_cours', 422, 'La transformation n’est pas en cours.');
+        $steps = $transformation->etapes ?? [];
+        abort_unless(isset($steps[$index]), 404);
+        abort_unless(($steps[$index]['statut'] ?? '') === 'en_cours', 422, 'Cette étape n’est pas l’étape active.');
+        abort_if(! empty($steps[$index]['terminee_le']) && ! auth()->user()->isAdmin(), 403, 'Une étape terminée est verrouillée.');
+
+        $data = $request->validate([
+            'co2_kg' => ['required', 'numeric', 'min:0'],
+            'eau_litres' => ['required', 'numeric', 'min:0'],
+            'temperature_mesuree' => ['nullable', 'numeric', 'between:-30,250'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'estime_par_ia' => ['nullable', 'boolean'],
+        ]);
+        $transformation->empreintes()->updateOrCreate(
+            ['etape' => $index],
+            [
+                'co2_kg' => $data['co2_kg'],
+                'eau_litres' => $data['eau_litres'],
+                'estime_par_ia' => (bool) ($data['estime_par_ia'] ?? false),
+            ],
+        );
+        $steps[$index]['statut'] = 'terminee';
+        $steps[$index]['terminee_le'] = now()->toIso8601String();
+        $steps[$index]['temperature_mesuree'] = $data['temperature_mesuree'] ?? null;
+        $steps[$index]['notes'] = $data['notes'] ?? null;
+        $steps[$index]['realisee_par'] = auth()->id();
+        $next = $index + 1;
+        if (isset($steps[$next])) {
+            $steps[$next]['statut'] = 'en_cours';
+            $steps[$next]['debut_reel'] = now()->toIso8601String();
+        }
+        if (auth()->user()->isAdmin()) {
+            $steps[$index]['journal'][] = ['action' => 'modification_administrateur', 'user_id' => auth()->id(), 'date' => now()->toIso8601String()];
+            Log::info('Étape de transformation modifiée par un administrateur', ['transformation_id' => $transformation->id, 'step' => $index]);
+        }
+        $transformation->update(['etapes' => $steps, 'etape_actuelle' => isset($steps[$next]) ? $next : count($steps)]);
+        return back()->with('success', 'Étape enregistrée avec l’opérateur connecté.');
+    }
+
+    public function modifierEtapeTerminee(Request $request, Transformation $transformation, int $index)
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+        $steps = $transformation->etapes ?? [];
+        abort_unless(isset($steps[$index]) && ($steps[$index]['statut'] ?? '') === 'terminee', 404);
+        $data = $request->validate([
+            'temperature_mesuree' => ['nullable', 'numeric', 'between:-30,250'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $steps[$index]['journal'][] = [
+            'action' => 'modification_apres_validation',
+            'user_id' => auth()->id(),
+            'date' => now()->toIso8601String(),
+            'ancienne_temperature' => $steps[$index]['temperature_mesuree'] ?? null,
+            'anciennes_notes' => $steps[$index]['notes'] ?? null,
+        ];
+        $steps[$index]['temperature_mesuree'] = $data['temperature_mesuree'] ?? null;
+        $steps[$index]['notes'] = $data['notes'] ?? null;
+        $steps[$index]['modifiee_par_admin'] = auth()->id();
+        $steps[$index]['modifiee_le'] = now()->toIso8601String();
+        Log::info('Données d’une étape terminée corrigées par un administrateur', ['transformation_id' => $transformation->id, 'step' => $index]);
+        $transformation->update(['etapes' => $steps]);
+        return back()->with('success', 'Correction administrateur enregistrée dans le journal de l’étape.');
+    }
+
+    public function photo(Request $request, Transformation $transformation)
+    {
+        abort_unless($transformation->statut === 'finalisee', 422, 'La transformation doit etre finalisee avant l?ajout de sa photo.');
+        $validated = $request->validate(['final_photo' => ['required', 'image', 'max:5120']]);
+        $photo = $validated['final_photo'];
+        $reference = preg_replace('/[^A-Za-z0-9_-]/', '-', $transformation->reference);
+        $extension = strtolower($photo->extension() ?: 'jpg');
+        $filename = $reference.'-final-'.now()->format('YmdHis').'.'.$extension;
+        $path = $photo->storeAs('transformations', $filename, 'public');
+        if (! $path || ! Storage::disk('public')->exists($path)) {
+            return back()->withErrors(['final_photo' => 'Le fichier n?a pas pu etre enregistre. Verifie les droits d?ecriture du stockage.']);
+        }
+
+        $oldPath = $transformation->final_photo_path;
+        try {
+            $transformation->update(['final_photo_path' => $path]);
+        } catch (\Throwable $exception) {
+            Storage::disk('public')->delete($path);
+            report($exception);
+            return back()->withErrors(['final_photo' => 'La photo a ete recue, mais son association a echoue.']);
+        }
+        if ($oldPath) Storage::disk('public')->delete($oldPath);
+
+        return back()->with('success', 'Photo finale enregistree.');
+    }
+
+    public function pdf(Transformation $transformation)
+    {
+        abort_unless(class_exists(\Barryvdh\DomPDF\Facade\Pdf::class), 503, 'Installe barryvdh/laravel-dompdf pour générer la fiche PDF.');
+        $transformation->load('validatedBy');
+        $operators = collect($transformation->etapes ?? [])->pluck('realisee_par')->filter()->unique();
+        $users = \App\Models\User::whereIn('id', $operators)->get()->keyBy('id');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('transformations.pdf', compact('transformation', 'users'))->setPaper('a4');
+        return $pdf->download('fiche-transformation-'.$transformation->reference.'.pdf');
     }
 
     public function terminerEtape(Request $request, Transformation $transformation, int $index)
@@ -240,12 +350,27 @@ class TransformationController extends Controller
             'nom_produit_final.max' => 'Le nom du produit final ne doit pas dépasser 255 caractères.',
         ]);
 
-        $transformation->update([
-            'rendement' => $validated['rendement'],
-            'nom_produit_final' => $validated['nom_produit_final'],
-            'statut'    => 'finalisee',
-            'date_fin'  => now(),
-        ]);
+        DB::transaction(function () use ($transformation, $validated): void {
+            $transformation->update([
+                'rendement' => $validated['rendement'],
+                'nom_produit_final' => $validated['nom_produit_final'],
+                'statut' => 'finalisee',
+                'date_fin' => now(),
+            ]);
+
+            $transformation->produitFinal()->firstOrCreate([], [
+                'code' => \App\Models\ProduitFinal::genererCode(),
+                'nom' => $validated['nom_produit_final'],
+                'user_id' => auth()->id(),
+                'quantite' => round((float) $transformation->quantite_utilisee * (float) $validated['rendement'] / 100, 2),
+                'unite' => $transformation->unite,
+                'date_production' => now()->toDateString(),
+                'date_peremption' => $transformation->suggested_shelf_life_days
+                    ? now()->addDays($transformation->suggested_shelf_life_days)->toDateString()
+                    : null,
+                'statut' => 'disponible',
+            ]);
+        });
 
         return back()->with('success', 'Transformation finalisée.');
     }

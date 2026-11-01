@@ -1,269 +1,70 @@
 @extends('layouts.admin')
-
 @section('title', 'Suivi de la transformation')
-
-@section('actions')
-<a href="{{ route('transformations.index') }}">← Liste</a>
-@if ($transformation->statut === 'brouillon')
-<a class="btn btn-ghost" href="{{ route('transformations.edit', $transformation) }}">Modifier</a>
-@endif
-@endsection
-
+@section('actions')<a href="{{ route('transformations.index') }}">← Liste</a>@endsection
 @section('content')
-
-@php
-$etapes = $transformation->etapes ?? [];
-$total = count($etapes);
-$terminees = collect($etapes)->where('statut', 'terminee')->count();
-$pourcent = $total > 0 ? round(($terminees / $total) * 100) : 0;
-
-// Index de l'étape courante = première étape non terminée
-$indexCourant = null;
-foreach ($etapes as $i => $e) {
-if (($e['statut'] ?? 'en_attente') !== 'terminee') {
-$indexCourant = $i;
-break;
-}
-}
-
-$enCours = $transformation->statut === 'en_cours';
-$empreintes = $transformation->empreintes->keyBy('etape');
-@endphp
-
-@if (session('success')) <p class="flash" role="status">{{ session('success') }}</p> @endif
-@if (session('error')) <p class="form-error" role="alert">{{ session('error') }}</p> @endif
-
-{{-- ==================== INFOS GÉNÉRALES ==================== --}}
+@php($steps = $transformation->etapes ?? [])
+@php($scheduledSteps = collect($steps)->contains(fn($step) => array_key_exists('duree_prevue_min', $step)))
+@php($empreintes = $transformation->empreintes->keyBy('etape'))
+@if (session('success'))<p class="flash" role="status">{{ session('success') }}</p>@endif
+@if (session('error'))<p class="flash flash-error" role="alert">{{ session('error') }}</p>@endif
 <section class="panel">
-    <div class="panel-head">
-        <div>
-            <p class="muted small">Référence de suivi</p>
-            <h2 class="mono">{{ $transformation->reference }}</h2>
-        </div>
-        <span class="tag {{ $enCours ? 'tag-warn' : '' }}">
-            {{ $transformation->statut === 'finalisee' ? 'Terminée' : ucfirst(str_replace('_', ' ', $transformation->statut)) }}
-        </span>
-    </div>
-
-    <dl class="detail-grid">
-        <div>
-            <dt>Matière première</dt>
-            <dd>{{ $transformation->matiere_premiere }}</dd>
-        </div>
-        <div>
-            <dt>Quantité utilisée</dt>
-            <dd>{{ $transformation->quantite_utilisee }} {{ $transformation->unite }}</dd>
-        </div>
-        <div>
-            <dt>Rendement</dt>
-            <dd>{{ $transformation->rendement !== null ? $transformation->rendement.' %' : '—' }}</dd>
-        </div>
-        <div>
-            <dt>Date début</dt>
-            <dd>{{ $transformation->date_debut?->format('d/m/Y H:i') ?? '—' }}</dd>
-        </div>
-        <div>
-            <dt>Date fin</dt>
-            <dd>{{ $transformation->date_fin?->format('d/m/Y H:i') ?? '—' }}</dd>
-        </div>
-    </dl>
-
-    @if ($transformation->statut === 'brouillon')
-    <form action="{{ route('transformations.lancer', $transformation) }}" method="POST" class="mt-1" data-async-form>
-        @csrf
-        <button class="btn" type="submit">Démarrer la transformation</button>
-    </form>
-    @endif
+    <div class="panel-head"><div><p class="muted small">Référence</p><h2 class="mono">{{ $transformation->reference }}</h2></div><span class="tag">{{ ucfirst(str_replace('_',' ',$transformation->statut)) }}</span></div>
+    <dl class="detail-grid"><div><dt>Matière première</dt><dd>{{ $transformation->matiere_premiere }}</dd></div><div><dt>Quantité d’entrée</dt><dd>{{ $transformation->quantite_utilisee }} {{ $transformation->unite }}</dd></div><div><dt>Produit prévu</dt><dd>{{ $transformation->nom_produit_final ?: '—' }}</dd></div><div><dt>Rendement</dt><dd>{{ $transformation->expected_yield_percent ?? $transformation->rendement ?? '—' }} %</dd></div><div><dt>Prévu</dt><dd>{{ $transformation->planned_start?->format('d/m/Y H:i') ?? $transformation->date_debut?->format('d/m/Y H:i') ?? '—' }} → {{ $transformation->planned_end?->format('d/m/Y H:i') ?? '—' }}</dd></div><div><dt>DLC suggérée</dt><dd>{{ $transformation->suggested_shelf_life_days ? $transformation->suggested_shelf_life_days.' jours' : '—' }}</dd></div></dl>
+    @if (in_array($transformation->statut, ['brouillon','planifiee'], true))<form method="POST" action="{{ route('transformations.lancer',$transformation) }}">@csrf<button class="btn">Démarrer la transformation</button></form>@endif
+    @if ($transformation->statut === 'finalisee' && $transformation->produitFinal)<a class="btn" href="{{ route('produits-finaux.show',$transformation->produitFinal) }}">Voir le produit fini {{ $transformation->produitFinal->code }}</a>@endif
+    <a class="btn btn-ghost" href="{{ route('transformations.pdf',$transformation) }}">Télécharger le PDF</a>
 </section>
 
-{{-- ==================== PROGRESSION DES ÉTAPES ==================== --}}
-<section class="panel">
-    <div class="panel-head">
-        <h2>Progression des étapes</h2>
-        <span class="muted">{{ $terminees }} / {{ $total }} terminées</span>
-    </div>
-
-    <div class="progress" role="progressbar" aria-valuenow="{{ $pourcent }}" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar" style="--progress: {{ $pourcent }}%"></div>
-    </div>
-    <p class="muted small progress-label">{{ $pourcent }} % complété</p>
-
-    @if ($transformation->statut === 'brouillon')
-    <p class="muted">Démarre la transformation pour pouvoir valider les étapes.</p>
+@if ($transformation->statut === 'finalisee')
+<section class="panel photo-upload-panel">
+    <div class="panel-head"><div><h2>Photo du produit final</h2><p class="muted small">Ajoute une photo JPG, PNG ou WEBP (5 Mo maximum).</p></div></div>
+    @if ($transformation->final_photo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($transformation->final_photo_path))
+        <img class="final-product-photo" src="{{ '/storage/'.ltrim($transformation->final_photo_path, '/') }}" alt="Photo du produit final {{ $transformation->nom_produit_final }}">
     @endif
-
-    @if ($total === 0)
-    <p class="muted">Aucune étape choisie pour cette transformation.</p>
-    @else
-    <ol class="timeline">
-        @foreach ($etapes as $i => $etape)
-        @php
-        $fait = ($etape['statut'] ?? 'en_attente') === 'terminee';
-        $courant = $enCours && $i === $indexCourant;
-        $classe = $fait ? 'is-done' : ($courant ? 'is-current' : 'is-todo');
-        $label = \App\Models\Transformation::labelEtape($etape['nom'] ?? '');
-        @endphp
-
-        <li class="timeline-item {{ $classe }}">
-            <span class="timeline-dot">
-                @if ($fait) ✓ @else {{ $etape['ordre'] ?? ($i + 1) }} @endif
-            </span>
-
-            <div class="timeline-card">
-                <div class="timeline-top">
-                    <strong>{{ $label }}</strong>
-                    <span class="timeline-badge">
-                        @if ($fait) Terminée
-                        @elseif ($courant) En cours
-                        @else En attente
-                        @endif
-                    </span>
-                </div>
-
-                @if ($em = $empreintes[$i] ?? null)
-                <p class="muted small mono">{{ number_format($em->co2_kg, 2, ',', ' ') }} kg CO₂e · {{ number_format($em->eau_litres, 0, ',', ' ') }} L d’eau @if ($em->estime_par_ia) · <span class="ai-tag">estimation IA</span> @endif</p>
-                @endif
-
-                @if ($courant)
-                <form action="{{ route('transformations.etape.terminer', [$transformation, $i]) }}"
-                    method="POST" class="step-action" data-async-form>
-                    @csrf
-                    <input type="hidden" name="estime_par_ia" value="0">
-                    <label>Carbone (kg CO₂e)
-                        <input name="co2_kg" class="mono" type="number" min="0" step="0.01" value="{{ old('co2_kg') }}" required @error('co2_kg') aria-invalid="true" @enderror>
-                        @error('co2_kg') <span class="field-error">{{ $message }}</span> @enderror
-                    </label>
-                    <label>Eau (litres)
-                        <input name="eau_litres" class="mono" type="number" min="0" step="0.01" value="{{ old('eau_litres') }}" required @error('eau_litres') aria-invalid="true" @enderror>
-                        @error('eau_litres') <span class="field-error">{{ $message }}</span> @enderror
-                    </label>
-                    <div class="step-buttons">
-                        <button class="btn btn-ghost" type="button" data-estimer="{{ route('transformations.etape.estimer', [$transformation, $i]) }}">Estimer avec l’IA</button>
-                        <button class="btn" type="submit">Terminer cette étape</button>
-                    </div>
-                    <p class="ai-hint small" role="status" aria-live="polite" hidden></p>
-                </form>
-                @endif
-            </div>
-        </li>
-        @endforeach
-    </ol>
-    @endif
-</section>
-{{-- ==================== FINALISATION ==================== --}}
-@if ($enCours && $transformation->toutesEtapesCompletes())
-<section class="panel finalization-panel">
-    <div class="panel-head">
-        <h2>Toutes les étapes sont terminées</h2>
-    </div>
-
-    @if ($transformation->rendement === null)
-    <form action="{{ route('transformations.finaliser', $transformation) }}"
-        method="POST" class="yield-form" data-async-form novalidate>
+    <form method="POST" enctype="multipart/form-data" action="{{ route('transformations.photo',$transformation) }}" class="photo-upload-form">
         @csrf
-        <label>Saisir le rendement obtenu *
-            <input type="number" name="rendement"
-                min="0.01" max="100" step="0.01" value="{{ old('rendement', $transformation->rendement) }}" required @error('rendement') aria-invalid="true" aria-describedby="rendement-error" @enderror>
-            <span>%</span>
+        <label class="photo-dropzone" for="final-photo-input">
+            <span class="photo-upload-icon" aria-hidden="true">+</span>
+            <strong>Choisir une photo</strong>
+            <span class="muted small" id="photo-file-name">Clique ici pour selectionner une image</span>
+            <input id="final-photo-input" type="file" name="final_photo" accept="image/jpeg,image/png,image/webp" required>
         </label>
-        @error('rendement')<span class="field-error" id="rendement-error" role="alert">{{ $message }}</span>@enderror
-        <label>Nom du produit final *
-            <input type="text" name="nom_produit_final" maxlength="255" value="{{ old('nom_produit_final', $transformation->nom_produit_final) }}" required @error('nom_produit_final') aria-invalid="true" aria-describedby="nom-produit-final-error" @enderror>
-        </label>
-        @error('nom_produit_final')<span class="field-error" id="nom-produit-final-error" role="alert">{{ $message }}</span>@enderror
-        <button class="btn" type="submit">
-            Finaliser la transformation
-        </button>
+        @error('final_photo')<span class="field-error" role="alert">{{ $message }}</span>@enderror
+        <button class="btn" type="submit">Enregistrer la photo</button>
     </form>
-    @endif
+<style>
+.photo-upload-panel{display:grid;gap:1rem}.photo-upload-form{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:1rem;align-items:center}.photo-dropzone{min-height:100px;border:2px dashed #86a992;border-radius:14px;background:rgba(36,130,77,.06);display:grid;place-content:center;text-align:center;gap:.25rem;padding:1rem;cursor:pointer}.photo-dropzone input{max-width:100%;margin:.4rem auto 0}.photo-upload-icon{font-size:1.5rem;color:#24824d}.final-product-photo{max-width:100%;max-height:180px;object-fit:contain;justify-self:start;border-radius:10px}@media(max-width:640px){.photo-upload-form{grid-template-columns:1fr}.photo-upload-form .btn{width:100%}}
+</style>
+<script>
+document.querySelector('#final-photo-input')?.addEventListener('change', event => { const file=event.target.files?.[0]; if(file) document.querySelector('#photo-file-name').textContent=file.name; });
+</script>
 </section>
 @endif
-<script>
-    // AI estimate: fills the step's CO₂/eau fields; the flag drops as soon as a value is edited by hand
-    document.addEventListener('click', async (event) => {
-        const button = event.target.closest('[data-estimer]');
-        if (!button) return;
-        const form = button.closest('form');
-        const hint = form.querySelector('.ai-hint');
-        button.disabled = true;
-        hint.hidden = false;
-        hint.classList.remove('is-error');
-        hint.textContent = 'Estimation en cours…';
-        try {
-            const response = await fetch(button.dataset.estimer, {
-                method: 'POST',
-                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': form.querySelector('[name=_token]').value },
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Estimation IA indisponible.');
-            form.co2_kg.value = data.co2_kg;
-            form.eau_litres.value = data.eau_litres;
-            form.estime_par_ia.value = '1';
-            hint.textContent = `Estimation IA : ${data.raison} Vérifiez les valeurs avant de terminer l’étape.`;
-        } catch (error) {
-            hint.classList.add('is-error');
-            hint.textContent = error.message;
-        } finally {
-            button.disabled = false;
-        }
-    });
-    document.addEventListener('input', (event) => {
-        if (event.target.matches('[name=co2_kg], [name=eau_litres]')) event.target.form.estime_par_ia.value = '0';
-    });
 
-    document.addEventListener('submit', async (event) => {
-        const form = event.target.closest('form[data-async-form]');
-        if (!form) return;
-
-        event.preventDefault();
-        const button = form.querySelector('button[type="submit"]');
-        if (button?.disabled) return;
-
-        const originalText = button?.textContent;
-        if (button) {
-            button.disabled = true;
-            button.textContent = 'Enregistrement…';
-        }
-
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: new FormData(form),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                redirect: 'follow',
-            });
-
-            if (!response.ok || new URL(response.url).pathname !== window.location.pathname) {
-                throw new Error('La mise à jour a échoué. Réessaie.');
-            }
-
-            const html = await response.text();
-            const refreshedDocument = new DOMParser().parseFromString(html, 'text/html');
-            const refreshedContent = refreshedDocument.querySelector('main.content');
-            const currentContent = document.querySelector('main.content');
-            if (!refreshedContent || !currentContent) throw new Error('Réponse du serveur invalide.');
-
-            currentContent.replaceChildren(
-                ...Array.from(refreshedContent.childNodes, node => document.importNode(node, true))
-            );
-        } catch (error) {
-            if (button) {
-                button.disabled = false;
-                button.textContent = originalText;
-            }
-            let message = document.querySelector('[data-async-error]');
-            if (!message) {
-                message = document.createElement('p');
-                message.className = 'form-error';
-                message.setAttribute('role', 'alert');
-                message.dataset.asyncError = 'true';
-                document.querySelector('main.content')?.prepend(message);
-            }
-            message.textContent = error.message;
-        }
-    });
-</script>
-
+<section class="panel"><div class="panel-head"><h2>Checklist des étapes</h2><span class="muted">{{ collect($steps)->where('statut','terminee')->count() }} / {{ count($steps) }} terminées</span></div>
+    <ol class="timeline">
+    @foreach($steps as $i => $step)
+        @php($done = in_array($step['statut'] ?? '', ['terminee','done'], true))
+        <li class="timeline-item {{ $done ? 'is-done' : (($step['statut'] ?? '') === 'en_cours' ? 'is-current' : 'is-todo') }}"><span class="timeline-dot" aria-hidden="true">{{ $i + 1 }}</span><div class="timeline-card">
+            <div class="timeline-top"><strong>{{ $i+1 }}. {{ $step['nom'] ?? 'Étape' }}</strong><span class="timeline-badge">{{ $done ? 'Terminée' : ucfirst($step['statut'] ?? 'planifiée') }} @if($step['critique'] ?? false) · Critique @endif</span></div>
+            @if(!empty($step['description']))<p>{{ $step['description'] }}</p>@endif
+            @if($empreinte = ($empreintes[$i] ?? null))<p class="muted small mono">{{ number_format($empreinte->co2_kg, 2, ',', ' ') }} kg CO₂e · {{ number_format($empreinte->eau_litres, 0, ',', ' ') }} L d’eau @if($empreinte->estime_par_ia) · estimation IA @endif</p>@endif
+            <p class="muted small">Prévu : {{ !empty($step['debut_prevu']) ? \Carbon\Carbon::parse($step['debut_prevu'])->format('d/m H:i') : '—' }} → {{ !empty($step['fin_prevue']) ? \Carbon\Carbon::parse($step['fin_prevue'])->format('d/m H:i') : '—' }} @if(($step['temperature_cible'] ?? null) !== null) · Cible : {{ $step['temperature_cible'] }} °C @endif</p>
+            @if($done)<p>Réel : {{ !empty($step['debut_reel']) ? \Carbon\Carbon::parse($step['debut_reel'])->format('d/m H:i') : '—' }} → {{ !empty($step['terminee_le']) ? \Carbon\Carbon::parse($step['terminee_le'])->format('d/m H:i') : '—' }} @if(($step['temperature_cible'] ?? null) !== null) · Température mesurée : {{ $step['temperature_mesuree'] ?? '—' }} °C @endif</p><p>Opérateur : {{ \App\Models\User::find($step['realisee_par'] ?? null)?->name ?? '—' }}</p>@if(!empty($step['notes']))<p>Notes : {{ $step['notes'] }}</p>@endif
+                @if(auth()->user()->isAdmin())<form method="POST" action="{{ route('transformations.etape.update',[$transformation,$i]) }}" class="form">@csrf @method('PATCH')@if(($step['temperature_cible'] ?? null) !== null)<label>Corriger la température mesurée<input type="number" name="temperature_mesuree" min="-30" max="250" step="0.1" value="{{ $step['temperature_mesuree'] ?? '' }}"></label>@endif<label>Corriger les notes<textarea name="notes">{{ $step['notes'] ?? '' }}</textarea></label><button class="btn btn-ghost">Corriger (journalisé)</button></form>@endif
+                @if(!empty($step['journal']))<details><summary>Journal des corrections</summary>@foreach($step['journal'] as $entry)<p class="muted small">{{ $entry['action'] ?? 'Modification' }} · {{ \App\Models\User::find($entry['user_id'] ?? null)?->name ?? 'Compte supprimé' }} · {{ !empty($entry['date']) ? \Carbon\Carbon::parse($entry['date'])->format('d/m/Y H:i') : '' }}</p>@endforeach</details>@endif
+            @elseif($transformation->statut === 'en_cours' && ($step['statut'] ?? '') === 'en_cours')
+                @if($scheduledSteps)
+                <form method="POST" action="{{ route('transformations.etape.executer',[$transformation,$i]) }}" class="form step-action" data-step-form>@csrf<input type="hidden" name="estime_par_ia" value="0"><label>Carbone (kg CO₂e)<input name="co2_kg" type="number" min="0" step="0.01" required></label><label>Eau (litres)<input name="eau_litres" type="number" min="0" step="0.01" required></label>@if(($step['temperature_cible'] ?? null) !== null)<label>Température mesurée (°C)<input type="number" name="temperature_mesuree" min="-30" max="250" step="0.1"></label>@endif<label>Remarque<textarea name="notes" rows="2"></textarea></label><div class="step-buttons"><button class="btn btn-ghost" type="button" data-estimer="{{ route('transformations.etape.estimer',[$transformation,$i]) }}">Estimer carbone et eau avec l’IA</button><button class="btn">Terminer cette étape</button></div><p class="ai-hint small" role="status" aria-live="polite" hidden></p></form>
+                @else
+                <form method="POST" action="{{ route('transformations.etape.terminer',[$transformation,$i]) }}" class="form step-action" data-step-form>@csrf<input type="hidden" name="estime_par_ia" value="0"><label>Carbone (kg CO₂e)<input type="number" name="co2_kg" min="0" step="0.01" required></label><label>Eau (litres)<input type="number" name="eau_litres" min="0" step="0.01" required></label><div class="step-buttons"><button class="btn btn-ghost" type="button" data-estimer="{{ route('transformations.etape.estimer',[$transformation,$i]) }}">Estimer carbone et eau avec l’IA</button><button class="btn">Terminer cette étape</button></div><p class="ai-hint small" role="status" aria-live="polite" hidden></p></form>
+                @endif
+            @endif
+        </div></li>
+    @endforeach
+    </ol>
+</section>
+@if ($transformation->statut === 'en_cours' && $transformation->toutesEtapesCompletes())
+<section class="panel"><h2>Finaliser</h2><form method="POST" action="{{ route('transformations.finaliser',$transformation) }}" class="form">@csrf<label>Rendement obtenu (%)<input type="number" name="rendement" min="0.01" max="100" step="0.01" value="{{ $transformation->expected_yield_percent ?? '' }}" required></label><label>Nom du produit final<input name="nom_produit_final" value="{{ $transformation->nom_produit_final }}" required></label><button class="btn">Finaliser la transformation</button></form></section>
+@endif
 @endsection
