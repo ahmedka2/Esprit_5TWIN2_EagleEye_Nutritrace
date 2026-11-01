@@ -1,0 +1,75 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: pcov
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env && php artisan key:generate
+      - run: npm ci && npm run build
+      - run: php artisan test --coverage-clover=coverage.xml
+
+      # Make paths relative so the Sonar job (on the VM, different folder) can map them.
+      - name: Upload coverage
+        if: always()
+        run: sed -i "s#$GITHUB_WORKSPACE/##g" coverage.xml || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  sonarqube:
+    needs: test
+    if: always() # scan even when tests fail
+    runs-on: self-hosted # SonarQube runs on this VM at localhost:9000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history for blame / new-code detection
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+        continue-on-error: true
+      - uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' }} # PRs only build, main pushes
+          tags: |
+            ghcr.io/ahmedka2/nutritrace:latest
+            ghcr.io/ahmedka2/nutritrace:${{ github.sha }}
