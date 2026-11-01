@@ -1,9 +1,9 @@
-@extends('layouts.admin')
+@extends($layout)
 
 @section('title', $livraison->exists ? 'Modifier la livraison' : 'Ajouter une livraison')
 
 @section('content')
-<form class="form" method="post" action="{{ $livraison->exists ? route('admin.livraisons.update', $livraison) : route('admin.livraisons.store') }}" novalidate>
+<form class="form" method="post" action="{{ $livraison->exists ? route($routePrefix.'.livraisons.update', $livraison) : route($routePrefix.'.livraisons.store') }}" novalidate>
     @csrf
     @if ($livraison->exists) @method('PUT') @endif
 
@@ -14,6 +14,11 @@
     <fieldset class="panel">
         <legend>Itinéraire</legend>
         <div class="fields">
+            <label>Code du produit à livrer
+                <input name="produit_code" class="mono" value="{{ old('produit_code', $livraison->produitFinal?->code) }}" placeholder="PF-2026-001" @error('produit_code') aria-invalid="true" @enderror>
+                <span class="hint">Le produit doit exister et ne pas être déjà affecté à une livraison.</span>
+                @error('produit_code') <span class="field-error">{{ $message }}</span> @enderror
+            </label>
             <label>Véhicule
                 <select name="vehicule_id" @error('vehicule_id') aria-invalid="true" @enderror>
                     <option value="">Choisir…</option>
@@ -59,7 +64,7 @@
     </fieldset>
 
     <div class="form-actions">
-        <a href="{{ $livraison->exists ? route('admin.livraisons.show', $livraison) : route('admin.livraisons.index') }}">Annuler</a>
+        <a href="{{ $livraison->exists ? route($routePrefix.'.livraisons.show', $livraison) : route($routePrefix.'.livraisons.index') }}">Annuler</a>
         <button class="btn" type="submit">{{ $livraison->exists ? 'Enregistrer les modifications' : 'Ajouter la livraison' }}</button>
     </div>
 </form>

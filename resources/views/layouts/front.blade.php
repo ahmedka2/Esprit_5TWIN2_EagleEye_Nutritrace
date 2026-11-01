@@ -36,7 +36,9 @@
                             <span class="chat-badge-count">{{ $unread }}</span>
                         @endif
                     </a>
-                    @if (auth()->user()->isAdmin() || auth()->user()->isTransformateur() || auth()->user()->isDistributeur())
+                    @if (auth()->user()->isDistributeur())
+                        <a href="{{ route('distributeur.dashboard') }}">Espace distributeur</a>
+                    @elseif (auth()->user()->isAdmin() || auth()->user()->isTransformateur())
                         <a href="{{ route('admin.dashboard') }}">Tableau de bord</a>
                     @elseif (auth()->user()->isProducteur())
                         <a href="{{ route('producteur.dashboard') }}">Espace Producteur</a>

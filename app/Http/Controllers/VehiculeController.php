@@ -11,70 +11,79 @@ use Illuminate\View\View;
 
 class VehiculeController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         // Affiche la liste des véhicules.
-        $vehicules = Vehicule::query()
+        $vehicules = $this->vehiculesQuery($request)
             ->withCount('livraisons')
             ->orderBy('immatriculation')
             ->paginate(15);
 
-        return view('admin.vehicules.index', compact('vehicules'));
+        return view('admin.vehicules.index', $this->viewData(['vehicules' => $vehicules]));
     }
 
     public function create(): View
     {
         // Affiche le formulaire de création.
-        return view('admin.vehicules.form', ['vehicule' => new Vehicule]);
+        return view('admin.vehicules.form', $this->viewData(['vehicule' => new Vehicule]));
     }
 
     public function store(Request $request): RedirectResponse
     {
         // Valide puis enregistre un nouveau véhicule.
-        $vehicule = Vehicule::create($this->validated($request));
+        $vehicule = $this->isDistributeurArea()
+            ? $request->user()->vehicules()->create($this->validated($request))
+            : Vehicule::create($this->validated($request));
 
         return redirect()
-            ->route('admin.vehicules.show', $vehicule)
+            ->route($this->routePrefix().'.vehicules.show', $vehicule)
             ->with('status', 'Le véhicule a été ajouté.');
     }
 
-    public function show(Vehicule $vehicule): View
+    public function show(Request $request, Vehicule $vehicule): View
     {
         // Affiche un véhicule avec ses livraisons.
-        return view('admin.vehicules.show', [
+        $this->ensureOwnership($request, $vehicule);
+
+        return view('admin.vehicules.show', $this->viewData([
             'vehicule' => $vehicule->load(['livraisons' => fn ($query) => $query->latest('date_depart')]),
-        ]);
+        ]));
     }
 
-    public function edit(Vehicule $vehicule): View
+    public function edit(Request $request, Vehicule $vehicule): View
     {
         // Affiche le formulaire de modification.
-        return view('admin.vehicules.form', compact('vehicule'));
+        $this->ensureOwnership($request, $vehicule);
+
+        return view('admin.vehicules.form', $this->viewData(compact('vehicule')));
     }
 
     public function update(Request $request, Vehicule $vehicule): RedirectResponse
     {
         // Valide puis met à jour le véhicule.
+        $this->ensureOwnership($request, $vehicule);
         $vehicule->update($this->validated($request, $vehicule));
 
         return redirect()
-            ->route('admin.vehicules.show', $vehicule)
+            ->route($this->routePrefix().'.vehicules.show', $vehicule)
             ->with('status', 'Le véhicule a été mis à jour.');
     }
 
-    public function destroy(Vehicule $vehicule): RedirectResponse
+    public function destroy(Request $request, Vehicule $vehicule): RedirectResponse
     {
         // Empêche la suppression si des livraisons sont liées.
+        $this->ensureOwnership($request, $vehicule);
+
         if ($vehicule->livraisons()->exists()) {
             return redirect()
-                ->route('admin.vehicules.show', $vehicule)
+                ->route($this->routePrefix().'.vehicules.show', $vehicule)
                 ->withErrors(['vehicule' => 'Ce véhicule ne peut pas être supprimé car il est associé à des livraisons.']);
         }
 
         $vehicule->delete();
 
         return redirect()
-            ->route('admin.vehicules.index')
+            ->route($this->routePrefix().'.vehicules.index')
             ->with('status', 'Le véhicule a été supprimé.');
     }
 
@@ -126,5 +135,37 @@ class VehiculeController extends Controller
         unset($validated['immatriculation_debut'], $validated['immatriculation_fin']);
 
         return $validated;
+    }
+
+    private function isDistributeurArea(): bool
+    {
+        return request()->routeIs('distributeur.*');
+    }
+
+    private function routePrefix(): string
+    {
+        return $this->isDistributeurArea() ? 'distributeur' : 'admin';
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function viewData(array $data): array
+    {
+        return [...$data, 'layout' => $this->isDistributeurArea() ? 'layouts.distributeur' : 'layouts.admin', 'routePrefix' => $this->routePrefix()];
+    }
+
+    private function vehiculesQuery(Request $request)
+    {
+        return $this->isDistributeurArea()
+            ? $request->user()->vehicules()
+            : Vehicule::query();
+    }
+
+    private function ensureOwnership(Request $request, Vehicule $vehicule): void
+    {
+        if ($this->isDistributeurArea()) {
+            abort_unless($vehicule->user_id === $request->user()->id, 404);
+        }
     }
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CategorieController;
 use App\Http\Controllers\Admin\CertificationController;
 use App\Http\Controllers\Admin\MatierePremiereController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DistributeurController;
 use App\Http\Controllers\LivraisonController;
 use App\Http\Controllers\ProducteurController;
 use App\Http\Controllers\ProduitFinalController;
@@ -136,7 +137,7 @@ Route::middleware('auth')->group(function () {
         ->name('ai.analyze-note');
 });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro', 'not-distributeur'])->group(function () {
     Route::get('/', fn () => view('admin.dashboard', ['produits' => produits(), 'ratesOuverts' => Rate::where('statut', 'ouvert')->count()]))->name('dashboard');
 
     Route::get('/signalements', function () {
@@ -152,6 +153,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])-
     })->name('rates.update');
 
 
+    Route::resource('vehicules', VehiculeController::class);
+    Route::resource('livraisons', LivraisonController::class);
+});
+
+Route::prefix('distributeur')->name('distributeur.')->middleware(['auth', 'verified', 'distributeur'])->group(function () {
+    Route::get('/', [DistributeurController::class, 'index'])->name('dashboard');
     Route::resource('vehicules', VehiculeController::class);
     Route::resource('livraisons', LivraisonController::class);
 });
@@ -191,7 +198,7 @@ Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified'
         ->parameters(['matieres-premieres' => 'matierePremiere']);
 });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'not-distributeur'])->group(function () {
     Route::resource('categories', CategorieController::class)
         ->parameters(['categories' => 'categorie']);
     Route::resource('certifications', CertificationController::class);
