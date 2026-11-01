@@ -6,12 +6,14 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -31,15 +33,18 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::twoFactorChallengeView(fn () => view('auth.two-factor-challenge'));
 
-        $this->app->singleton(\Laravel\Fortify\Contracts\TwoFactorLoginResponse::class, function () {
-            return new class implements \Laravel\Fortify\Contracts\TwoFactorLoginResponse {
+        $this->app->singleton(TwoFactorLoginResponse::class, function () {
+            return new class implements TwoFactorLoginResponse
+            {
                 public function toResponse($request)
                 {
-                    /** @var \App\Models\User $user */
+                    /** @var User $user */
                     $user = $request->user();
-                    $target = $user->isProducteur()
+                    $target = $user->isDistributeur()
+                        ? route('distributeur.dashboard')
+                        : ($user->isProducteur()
                         ? route('producteur.dashboard')
-                        : ($user->isPro() ? route('admin.dashboard') : route('home'));
+                        : ($user->isPro() ? route('admin.dashboard') : route('home')));
 
                     return redirect()->intended($target);
                 }

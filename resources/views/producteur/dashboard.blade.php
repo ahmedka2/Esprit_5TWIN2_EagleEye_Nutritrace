@@ -92,6 +92,7 @@
                 <tr>
                     <th>Nom</th>
                     <th>Catégorie</th>
+                    <th>Quantité</th>
                     <th>Prix</th>
                     <th>Certifications</th>
                     <th><span class="sr-only">Actions</span></th>
@@ -102,6 +103,7 @@
                     <tr>
                         <td><strong>{{ $matiere->name }}</strong></td>
                         <td>{{ $matiere->categorie->name }}</td>
+                        <td>{{ $matiere->quantite !== null ? number_format((float) $matiere->quantite, 3, ',', ' ').' '.($matiere->unite === 'litre' ? 'L' : 'kg') : '—' }}</td>
                         <td>{{ number_format((float) $matiere->price, 2, ',', ' ') }} €</td>
                         <td>
                             @forelse ($matiere->certifications as $certification)
@@ -118,10 +120,11 @@
                                 @method('delete')
                                 <button class="link-button" type="submit">Supprimer</button>
                             </form>
+                            <a href="{{ route('producteur.matieres-premieres.historique', $matiere) }}">Historique</a>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="empty">Aucune matière première enregistrée.</td></tr>
+                    <tr><td colspan="6" class="empty">Aucune matière première enregistrée.</td></tr>
                 @endforelse
             </tbody>
         </table>

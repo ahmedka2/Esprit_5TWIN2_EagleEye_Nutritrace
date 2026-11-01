@@ -28,6 +28,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'ai' => [
+        'base_url' => env('AI_BASE_URL', 'https://api.groq.com/openai/v1'),
+        'key' => env('AI_API_KEY'),
+        'model' => env('AI_MODEL', 'openai/gpt-oss-20b'),
+    ],
+
+    'ia_vehicule' => [
+        'url' => env('IA_VEHICULE_URL'),
+        'key' => env('IA_VEHICULE_KEY'),
+        'model' => env('IA_VEHICULE_MODEL'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

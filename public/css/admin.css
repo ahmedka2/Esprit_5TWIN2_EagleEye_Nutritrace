@@ -107,6 +107,7 @@ a { color: var(--accent-ink); text-underline-offset: .2em; }
 .table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .row-actions { white-space: nowrap; text-align: right; }
 .row-actions a + a { margin-left: .75rem; }
+.row-actions form + a { margin-left: .75rem; }
 .link-button { border: 0; padding: 0; margin-left: .75rem; background: none; color: var(--accent-ink); font: inherit; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
 .row-actions form { display: inline; margin-left: .75rem; }
 .row-actions .link-button {
@@ -147,6 +148,13 @@ a { color: var(--accent-ink); text-underline-offset: .2em; }
 .vehicule-details dd { margin: .2rem 0 0; font-weight: 600; }
 .panel-title { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 1.35rem 1.35rem 0; }
 .panel-title h2 { margin: 0; }
+.stats-list { display: grid; gap: .65rem; margin: 0; }
+.stats-list div { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .65rem; border-bottom: 1px solid var(--line); }
+.stats-list div:last-child { padding-bottom: 0; border-bottom: 0; }
+.stats-list dd { margin: 0; font-weight: 700; }
+.stats-list--inline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stats-list--inline div { display: block; border: 0; padding: .75rem 1rem; border-radius: 12px; background: color-mix(in srgb, var(--bg) 60%, transparent); }
+.stats-list--inline dd { font-size: 1.5rem; }
 .todo { background: var(--warn-tint); border-radius: 12px; padding: .75rem 1rem; margin-bottom: .75rem; box-shadow: inset 4px 0 0 var(--harvest); }
 .todo p:last-child { margin: 0; }
 
@@ -166,6 +174,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
 .filters label { min-width: 180px; }
 
 .form { display: grid; gap: 1.5rem; }
+.scan-carte-grise { display: grid; gap: 1rem; margin: 0 0 1.5rem; padding: 1rem; border: 1px dashed var(--line); border-radius: 14px; background: color-mix(in srgb, var(--bg) 55%, transparent); }
+.scan-carte-grise h2 { margin: 0; }
+.scan-carte-grise p { margin: .25rem 0 0; }
+.scan-carte-grise-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.scan-carte-grise-actions .btn { display: inline-flex; align-items: center; }
+#camera-zone { display: grid; gap: .75rem; max-width: 460px; }
+#camera-video, #camera-photo { width: 100%; border-radius: 12px; background: #101010; }
 fieldset.panel { margin: 0; min-width: 0; }
 legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem; }
 .fields legend { position: relative; top: -.2rem; }
@@ -257,6 +272,7 @@ legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem
     .route-line::after { right: auto; bottom: -1px; left: 50%; top: auto; rotate: 135deg; translate: -50% 0; }
     .livraison-notes dl { grid-template-columns: 1fr; }
     .vehicule-details dl { grid-template-columns: 1fr; }
+    .stats-list--inline { grid-template-columns: 1fr; }
     .panel:has(.table-form) { overflow-x: auto; }
     .table-form { min-width: 560px; }
     .step-picker { align-items: stretch; flex-direction: column; }
@@ -365,3 +381,13 @@ legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem
 .rate-empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 18px; padding: 2.5rem 1.5rem; text-align: center; }
 .rate-empty p { max-width: 46ch; margin-inline: auto; }
 .kpis dt a { color: inherit; }
+
+/* AI estimate on transformation steps, QR panel */
+.ai-tag { font: 600 .68rem var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: .1rem .45rem; border-radius: 999px; background: var(--warn-tint); color: var(--warn-ink); white-space: nowrap; }
+.step-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+.ai-hint { margin: .6rem 0 0; padding: .55rem .8rem; border-radius: 10px; background: var(--warn-tint); color: var(--warn-ink); }
+.ai-hint.is-error { background: var(--danger-surface); color: var(--danger); }
+.qr-panel { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+.qr-panel img { background: #fff; border-radius: 12px; padding: 6px; border: 1px solid var(--line); }
+.qr-panel > div { flex: 1 1 260px; }
+.qr-panel a.mono { overflow-wrap: anywhere; }

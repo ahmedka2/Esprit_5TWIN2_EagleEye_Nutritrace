@@ -15,13 +15,14 @@ class MatierePremiere extends Model
 
     protected $table = 'matieres_premieres';
 
-    protected $fillable = ['name', 'price', 'quantite', 'unite', 'categorie_id', 'producteur_id'];
+    protected $fillable = ['name', 'price', 'quantite', 'quantite_initiale', 'unite', 'categorie_id', 'producteur_id'];
 
     protected function casts(): array
     {
         return [
             'price' => 'decimal:2',
             'quantite' => 'decimal:3',
+            'quantite_initiale' => 'decimal:3',
         ];
     }
 

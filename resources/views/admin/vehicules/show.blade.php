@@ -1,9 +1,9 @@
-@extends('layouts.admin')
+@extends($layout)
 
 @section('title', $vehicule->immatriculation)
 
 @section('actions')
-    <a class="btn btn-ghost" href="{{ route('admin.vehicules.edit', $vehicule) }}"><x-icon name="pencil" /> Modifier</a>
+    <a class="btn btn-ghost" href="{{ route($routePrefix.'.vehicules.edit', $vehicule) }}"><x-icon name="pencil" /> Modifier</a>
 @endsection
 
 @section('content')
@@ -41,6 +41,7 @@
     <dl>
         <div><dt><x-icon name="truck" /> Type</dt><dd>{{ \App\Enums\TypeVehicule::labelFor($vehicule->type) }}</dd></div>
         <div><dt>Immatriculation</dt><dd class="mono">{{ $vehicule->immatriculation }}</dd></div>
+        <div><dt>Marque</dt><dd>{{ $vehicule->marque ?: '—' }}</dd></div>
     </dl>
 </section>
 
@@ -51,7 +52,7 @@
         <tbody>
         @forelse ($vehicule->livraisons as $livraison)
             <tr>
-                <td><a href="{{ route('admin.livraisons.show', $livraison) }}"><strong>{{ $livraison->depart }}</strong><span class="route-arrow" aria-hidden="true">→</span><strong>{{ $livraison->arrivee }}</strong></a></td>
+                <td><a href="{{ route($routePrefix.'.livraisons.show', $livraison) }}"><strong>{{ $livraison->depart }}</strong><span class="route-arrow" aria-hidden="true">→</span><strong>{{ $livraison->arrivee }}</strong></a></td>
                 <td>{{ \Illuminate\Support\Carbon::parse($livraison->date_depart)->format('d/m/Y') }}<br><span class="muted small">{{ \Illuminate\Support\Carbon::parse($livraison->date_depart)->format('H:i') }}</span></td>
                 <td><span class="tag">{{ ucfirst(str_replace('_', ' ', $livraison->statut)) }}</span></td>
             </tr>
@@ -62,7 +63,7 @@
     </table>
 </section>
 
-<form method="post" action="{{ route('admin.vehicules.destroy', $vehicule) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
+<form method="post" action="{{ route($routePrefix.'.vehicules.destroy', $vehicule) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
     @csrf
     @method('DELETE')
     @error('vehicule') <p class="form-error" role="alert">{{ $message }}</p> @enderror

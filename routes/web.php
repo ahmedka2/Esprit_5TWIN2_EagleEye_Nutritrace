@@ -1,17 +1,28 @@
 <?php
 
+use App\Http\Controllers\ActionCorrectiveController;
 use App\Http\Controllers\Admin\CategorieController;
 use App\Http\Controllers\Admin\CertificationController;
 use App\Http\Controllers\Admin\MatierePremiereController;
+use App\Http\Controllers\AiAssistantController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\DistributeurController;
+use App\Http\Controllers\FavoriController;
 use App\Http\Controllers\LivraisonController;
+use App\Http\Controllers\LivraisonStatistiqueController;
 use App\Http\Controllers\ProducteurController;
 use App\Http\Controllers\ProduitFinalController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReponseRapideController;
+use App\Http\Controllers\SignalementQualiteController;
 use App\Http\Controllers\TransformationController;
 use App\Http\Controllers\VehiculeController;
+use App\Models\Message;
+use App\Models\EmpreinteEnvironnementale;
 use App\Models\ProduitFinal;
 use App\Models\Rate;
+use App\Models\Transformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
@@ -30,7 +41,7 @@ Route::get('/', function () {
     }
     $q = mb_strtolower(trim(request('q', '')));
     $all = produits();
-    $found = array_filter($all, fn($p) => str_contains(mb_strtolower($p['lot'] . ' ' . $p['nom']), $q));
+    $found = array_filter($all, fn ($p) => str_contains(mb_strtolower($p['lot'].' '.$p['nom']), $q));
 
     $userFavoriteLotIds = auth()->check()
         ? auth()->user()->favoris()->pluck('lot_id')->all()
@@ -50,7 +61,7 @@ Route::get('/produits/{produitFinal:code}', function (ProduitFinal $produitFinal
     $chatMessages = collect();
 
     if (auth()->check() && $creator) {
-        $chatMessages = \App\Models\Message::betweenUsersForProduct(auth()->id(), $creator->id, $produitFinal->id)
+        $chatMessages = Message::betweenUsersForProduct(auth()->id(), $creator->id, $produitFinal->id)
             ->with('sender')
             ->get();
     }
@@ -62,6 +73,13 @@ Route::get('/produits/{produitFinal:code}', function (ProduitFinal $produitFinal
         'chatMessages' => $chatMessages,
     ]);
 })->name('produit');
+
+Route::get('/produits/{produitFinal:code}/qr.svg', fn (ProduitFinal $produitFinal) => response(
+    (new \BaconQrCode\Writer(new \BaconQrCode\Renderer\ImageRenderer(
+        new \BaconQrCode\Renderer\RendererStyle\RendererStyle(320, 2),
+        new \BaconQrCode\Renderer\Image\SvgImageBackEnd,
+    )))->writeString(route('produit', $produitFinal)),
+)->header('Content-Type', 'image/svg+xml'))->name('produit.qr');
 
 Route::post('/produits/{produitFinal:code}/signalements', function (Request $request, ProduitFinal $produitFinal) {
     $data = $request->validate([
@@ -101,46 +119,42 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.send');
 
-    Route::get('/favoris', [\App\Http\Controllers\FavoriController::class, 'index'])->name('favoris.index');
-    Route::get('/favoris/comparer', [\App\Http\Controllers\FavoriController::class, 'comparer'])->name('favoris.comparer');
-    Route::post('/produits/{produitFinal:code}/favori', [\App\Http\Controllers\FavoriController::class, 'toggle'])->name('favoris.toggle');
-    Route::patch('/favoris/{favori}/note', [\App\Http\Controllers\FavoriController::class, 'updateNote'])->name('favoris.note.update');
-    Route::delete('/favoris/{favori}', [\App\Http\Controllers\FavoriController::class, 'destroy'])->name('favoris.destroy');
+    Route::get('/favoris', [FavoriController::class, 'index'])->name('favoris.index');
+    Route::get('/favoris/comparer', [FavoriController::class, 'comparer'])->name('favoris.comparer');
+    Route::post('/produits/{produitFinal:code}/favori', [FavoriController::class, 'toggle'])->name('favoris.toggle');
+    Route::patch('/favoris/{favori}/note', [FavoriController::class, 'updateNote'])->name('favoris.note.update');
+    Route::delete('/favoris/{favori}', [FavoriController::class, 'destroy'])->name('favoris.destroy');
 
-    Route::get('/messages', [\App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
-    Route::get('/produits/{produitFinal:code}/chat/{interlocutor}', [\App\Http\Controllers\ChatController::class, 'show'])->name('chat.show');
-    Route::get('/produits/{produitFinal:code}/chat/{interlocutor}/poll', [\App\Http\Controllers\ChatController::class, 'poll'])->name('chat.poll');
-    Route::post('/produits/{produitFinal:code}/messages', [\App\Http\Controllers\ChatController::class, 'store'])->name('chat.store');
-    Route::delete('/messages/{message}', [\App\Http\Controllers\ChatController::class, 'destroy'])->name('chat.destroy');
-    Route::post('/conversations/archive', [\App\Http\Controllers\ChatController::class, 'toggleArchive'])->name('chat.archive');
+    Route::get('/messages', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/produits/{produitFinal:code}/chat/{interlocutor}', [ChatController::class, 'show'])->name('chat.show');
+    Route::get('/produits/{produitFinal:code}/chat/{interlocutor}/poll', [ChatController::class, 'poll'])->name('chat.poll');
+    Route::post('/produits/{produitFinal:code}/messages', [ChatController::class, 'store'])->name('chat.store');
+    Route::delete('/messages/{message}', [ChatController::class, 'destroy'])->name('chat.destroy');
+    Route::post('/conversations/archive', [ChatController::class, 'toggleArchive'])->name('chat.archive');
 
-    Route::resource('reponses-rapides', \App\Http\Controllers\ReponseRapideController::class)
-        ->middleware('pro')
-        ->parameters(['reponses-rapides' => 'reponseRapide']);
-    Route::get('/api/reponses-rapides', [\App\Http\Controllers\ReponseRapideController::class, 'apiList'])
-        ->middleware('pro')
-        ->name('reponses-rapides.api');
+    Route::resource('reponses-rapides', ReponseRapideController::class)->parameters(['reponses-rapides' => 'reponseRapide']);
+    Route::get('/api/reponses-rapides', [ReponseRapideController::class, 'apiList'])->name('reponses-rapides.api');
 
-    Route::resource('signalements-qualite', \App\Http\Controllers\SignalementQualiteController::class)
+    Route::resource('signalements-qualite', SignalementQualiteController::class)
         ->parameters(['signalements-qualite' => 'signalementQualite']);
-    Route::patch('/signalements-qualite/{signalementQualite}/statut', [\App\Http\Controllers\SignalementQualiteController::class, 'updateStatut'])
+    Route::patch('/signalements-qualite/{signalementQualite}/statut', [SignalementQualiteController::class, 'updateStatut'])
         ->name('signalements-qualite.statut.update');
 
-    Route::resource('signalements-qualite.actions-correctives', \App\Http\Controllers\ActionCorrectiveController::class)
+    Route::resource('signalements-qualite.actions-correctives', ActionCorrectiveController::class)
         ->parameters([
             'signalements-qualite' => 'signalementQualite',
             'actions-correctives' => 'actionCorrective',
         ])->except(['index', 'show', 'create']);
 
-    Route::post('/ai/analyze-signalement', [\App\Http\Controllers\AiAssistantController::class, 'analyzeSignalement'])
+    Route::post('/ai/analyze-signalement', [AiAssistantController::class, 'analyzeSignalement'])
         ->name('ai.analyze-signalement');
-    Route::post('/ai/suggest-replies', [\App\Http\Controllers\AiAssistantController::class, 'suggestReplies'])
+    Route::post('/ai/suggest-replies', [AiAssistantController::class, 'suggestReplies'])
         ->name('ai.suggest-replies');
-    Route::post('/ai/analyze-note', [\App\Http\Controllers\AiAssistantController::class, 'analyzeNote'])
+    Route::post('/ai/analyze-note', [AiAssistantController::class, 'analyzeNote'])
         ->name('ai.analyze-note');
 });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro', 'not-distributeur'])->group(function () {
     Route::get('/', fn () => view('admin.dashboard', ['produits' => produits(), 'ratesOuverts' => Rate::where('statut', 'ouvert')->count()]))->name('dashboard');
 
     Route::get('/signalements', function () {
@@ -155,18 +169,32 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'pro'])-
         return back()->with('status', 'Signalement mis à jour.');
     })->name('rates.update');
 
-
+    Route::post('vehicules/analyser-carte-grise', [VehiculeController::class, 'analyseCarteGrise'])->name('vehicules.analyse-carte-grise');
     Route::resource('vehicules', VehiculeController::class);
     Route::resource('livraisons', LivraisonController::class);
 });
 
+Route::prefix('distributeur')->name('distributeur.')->middleware(['auth', 'verified', 'distributeur'])->group(function () {
+    Route::get('/', [DistributeurController::class, 'index'])->name('dashboard');
+    Route::get('/statistiques', [LivraisonStatistiqueController::class, 'index'])->name('statistiques.index');
+    Route::get('/statistiques/export', [LivraisonStatistiqueController::class, 'export'])->name('statistiques.export');
+    Route::post('vehicules/analyser-carte-grise', [VehiculeController::class, 'analyseCarteGrise'])->name('vehicules.analyse-carte-grise');
+    Route::resource('vehicules', VehiculeController::class);
+    Route::resource('livraisons', LivraisonController::class);
+});
 
-
-
-
-
-Route::resource('transformations', \App\Http\Controllers\TransformationController::class);
+Route::resource('transformations', TransformationController::class);
 Route::prefix('transformations')->name('transformations.')->group(function () {
+    Route::post('/{transformation}/etape/{index}/estimer', function (Transformation $transformation, int $index) {
+        abort_unless(isset($transformation->etapes[$index]), 404);
+        try {
+            return EmpreinteEnvironnementale::estimer($transformation, $index);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'Estimation IA indisponible pour le moment. Saisissez les valeurs à la main.'], 503);
+        }
+    })->middleware(['auth', 'throttle:10,1'])->name('etape.estimer');
     Route::post(
         '/{transformation}/lancer',
         [TransformationController::class, 'lancer']
@@ -191,14 +219,20 @@ Route::resource('produits-finaux', ProduitFinalController::class)
 
 Route::prefix('producteur')->name('producteur.')->middleware(['auth', 'verified', 'producteur'])->group(function () {
     Route::get('/', [ProducteurController::class, 'index'])->name('dashboard');
+    Route::get('matieres-premieres/{matierePremiere}/historique/pdf', [MatierePremiereController::class, 'historiquePdf'])->name('matieres-premieres.historique-pdf');
+    Route::get('matieres-premieres/{matierePremiere}/historique', [MatierePremiereController::class, 'historique'])->name('matieres-premieres.historique');
+    Route::post('matieres-premieres/ai-prefill', [MatierePremiereController::class, 'aiPrefill'])->name('matieres-premieres.ai-prefill');
     Route::resource('matieres-premieres', MatierePremiereController::class)
         ->parameters(['matieres-premieres' => 'matierePremiere']);
 });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'not-distributeur'])->group(function () {
     Route::resource('categories', CategorieController::class)
         ->parameters(['categories' => 'categorie']);
     Route::resource('certifications', CertificationController::class);
+    Route::get('matieres-premieres/{matierePremiere}/historique/pdf', [MatierePremiereController::class, 'historiquePdf'])->name('matieres-premieres.historique-pdf');
+    Route::get('matieres-premieres/{matierePremiere}/historique', [MatierePremiereController::class, 'historique'])->name('matieres-premieres.historique');
+    Route::post('matieres-premieres/ai-prefill', [MatierePremiereController::class, 'aiPrefill'])->name('matieres-premieres.ai-prefill');
     Route::resource('matieres-premieres', MatierePremiereController::class)
         ->parameters(['matieres-premieres' => 'matierePremiere']);
 });
