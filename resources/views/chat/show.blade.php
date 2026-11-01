@@ -1,8 +1,19 @@
-@extends('layouts.front')
+@extends($layout ?? 'layouts.front')
 
 @section('title', 'Discussion — ' . $produit->nom)
 
 @section('content')
+@if (($layout ?? '') !== 'layouts.front')
+    <link rel="stylesheet" href="{{ asset('css/front.css') }}">
+    <style>
+        .shell .wrap.section {
+            width: 100%;
+            max-width: 960px;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+@endif
 <section class="wrap section" style="max-width: 860px; margin-inline: auto;">
     <div style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
         <div>
@@ -93,12 +104,12 @@
 
         {{-- Barre d'outils au-dessus de la saisie : Smart Reply IA, Motifs & Réponses rapides --}}
         <div style="background:var(--paper); padding:.6rem 1.25rem; border-top: 1px solid var(--line); display:flex; flex-direction:column; gap:.55rem;">
-            {{-- Bandeau Smart Reply IA (Similarité Cosinus — Xenova/multilingual-e5-small) --}}
-            @if (!empty($smartReplies))
+            {{-- Bandeau Suggestions automatiques (Similarité Cosinus — Xenova/multilingual-e5-small) --}}
+            @if (auth()->user()?->isPro() && !empty($smartReplies))
                 <div id="smart-reply-ai-banner" style="background:linear-gradient(135deg, rgba(46,125,79,0.08), rgba(30,64,175,0.06)); border:1px solid var(--fern, #2E7D4F); border-radius:8px; padding:.55rem .8rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.4rem; margin-bottom:.4rem;">
                         <span class="mono" style="font-size:.74rem; font-weight:700; color:var(--fern, #2E7D4F);">
-                            🤖 Smart Reply IA (Similarité Cosinus — Modèle <code>Xenova/multilingual-e5-small</code>)
+                            Suggestions automatiques (Similarité sémantique — <code>Xenova/multilingual-e5-small</code>)
                         </span>
                         <span class="mono muted" style="font-size:.68rem;">Microsoft Research ONNX</span>
                     </div>
@@ -109,7 +120,7 @@
                                     onclick="insertSmartReply(this.dataset.content)"
                                     data-content="{{ $sr['contenu'] }}"
                                     style="background:#fff; border:1px solid var(--fern, #2E7D4F); border-radius:999px; padding:.25rem .75rem; font-size:.76rem; cursor:pointer; color:var(--ink); display:inline-flex; align-items:center; gap:.4rem; transition:all .15s ease;">
-                                <span>✨ <strong>{{ $sr['titre'] }}</strong></span>
+                                <span><strong>{{ $sr['titre'] }}</strong></span>
                                 <span class="mono" style="background:rgba(46,125,79,0.14); color:var(--fern, #2E7D4F); padding:.05rem .4rem; border-radius:999px; font-weight:700; font-size:.7rem;">
                                     {{ number_format($sr['similarity_percent'], 1, ',', ' ') }} %
                                 </span>
@@ -130,9 +141,9 @@
             </div>
 
             {{-- Réponses rapides du producteur si disponibles --}}
-            @if ($reponsesRapides->isNotEmpty())
+            @if (auth()->user()?->isPro() && $reponsesRapides->isNotEmpty())
                 <div style="display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:.2rem;">
-                    <span class="mono" style="font-size:.75rem; color:var(--fern); font-weight:600;">⚡ Réponses rapides :</span>
+                    <span class="mono" style="font-size:.75rem; color:var(--fern); font-weight:600;">Modèles enregistrés :</span>
                     <select id="quick-reply-select" style="font-size:.8rem; padding:.25rem .6rem; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; max-width:280px;">
                         <option value="">Sélectionner un modèle à insérer...</option>
                         @foreach ($reponsesRapides as $qr)

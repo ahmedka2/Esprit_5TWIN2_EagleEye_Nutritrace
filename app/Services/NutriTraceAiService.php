@@ -261,22 +261,22 @@ class NutriTraceAiService
         if ($urgentHits > 0 || ($negHits >= 2 && str_contains($text, '!'))) {
             $sentiment = 'urgent';
             $urgenceScore = min(98, 78 + ($urgentHits * 8) + ($negHits * 4));
-            $badgeLabel = 'Urgent 🔴';
+            $badgeLabel = 'Urgent';
             $confidence = 0.93;
         } elseif ($negHits > $posHits) {
             $sentiment = 'negatif';
             $urgenceScore = min(74, 52 + ($negHits * 9));
-            $badgeLabel = 'Alerte / Négatif 🔴';
+            $badgeLabel = 'Alerte';
             $confidence = 0.87;
         } elseif ($posHits > 0 && !$hasQuestion) {
             $sentiment = 'positif';
             $urgenceScore = max(5, 15 - ($posHits * 3));
-            $badgeLabel = 'Positif 🟢';
+            $badgeLabel = 'Positif';
             $confidence = 0.94;
         } else {
             $sentiment = 'neutre';
             $urgenceScore = $hasQuestion ? 38 : 20;
-            $badgeLabel = 'Question 🟡';
+            $badgeLabel = 'Question';
             $confidence = 0.86;
         }
 

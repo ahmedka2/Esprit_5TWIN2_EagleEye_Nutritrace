@@ -96,7 +96,7 @@
                     {{ $sBadge['icon'] }} {{ $sBadge['label'] }}
                 </span>
                 <span class="sq-badge mono" style="background:{{ $aiBadge['bg'] }}; color:{{ $aiBadge['color'] }}; border-color:{{ $aiBadge['border'] }};">
-                    🤖 {{ $aiBadge['label'] }}
+                    {{ $aiBadge['label'] }}
                 </span>
             </div>
             <h1 style="margin:0; font-size:clamp(1.5rem, 3vw, 2.2rem);">
@@ -189,7 +189,7 @@
                 {{-- Encart Diagnostic IA Embarqué --}}
                 <div style="background:linear-gradient(135deg, rgba(46,125,79,0.06), rgba(30,64,175,0.05)); border:1px solid var(--fern, #2E7D4F); border-radius:10px; padding:1rem 1.2rem; margin-bottom:1.25rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem; margin-bottom:.45rem;">
-                        <strong style="font-size:.9rem;">🤖 Diagnostic &amp; Triage IA Embarqué</strong>
+                        <strong style="font-size:.9rem;">Diagnostic &amp; Triage automatique</strong>
                         <span class="mono" style="font-size:.78rem; font-weight:700; color:{{ $aiBadge['color'] }};">
                             {{ $aiBadge['label'] }}
                         </span>

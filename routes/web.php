@@ -114,8 +114,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/messages/{message}', [\App\Http\Controllers\ChatController::class, 'destroy'])->name('chat.destroy');
     Route::post('/conversations/archive', [\App\Http\Controllers\ChatController::class, 'toggleArchive'])->name('chat.archive');
 
-    Route::resource('reponses-rapides', \App\Http\Controllers\ReponseRapideController::class)->parameters(['reponses-rapides' => 'reponseRapide']);
-    Route::get('/api/reponses-rapides', [\App\Http\Controllers\ReponseRapideController::class, 'apiList'])->name('reponses-rapides.api');
+    Route::resource('reponses-rapides', \App\Http\Controllers\ReponseRapideController::class)
+        ->middleware('pro')
+        ->parameters(['reponses-rapides' => 'reponseRapide']);
+    Route::get('/api/reponses-rapides', [\App\Http\Controllers\ReponseRapideController::class, 'apiList'])
+        ->middleware('pro')
+        ->name('reponses-rapides.api');
 
     Route::resource('signalements-qualite', \App\Http\Controllers\SignalementQualiteController::class)
         ->parameters(['signalements-qualite' => 'signalementQualite']);
