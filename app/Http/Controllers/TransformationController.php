@@ -5,16 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Transformation;
 use App\Models\MatierePremiere;
 use Illuminate\Http\Request;
-<<<<<<< HEAD
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-=======
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
->>>>>>> origin/main
 
 class TransformationController extends Controller
 {
