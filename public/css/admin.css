@@ -373,3 +373,13 @@ legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem
 .rate-empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 18px; padding: 2.5rem 1.5rem; text-align: center; }
 .rate-empty p { max-width: 46ch; margin-inline: auto; }
 .kpis dt a { color: inherit; }
+
+/* AI estimate on transformation steps, QR panel */
+.ai-tag { font: 600 .68rem var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: .1rem .45rem; border-radius: 999px; background: var(--warn-tint); color: var(--warn-ink); white-space: nowrap; }
+.step-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+.ai-hint { margin: .6rem 0 0; padding: .55rem .8rem; border-radius: 10px; background: var(--warn-tint); color: var(--warn-ink); }
+.ai-hint.is-error { background: var(--danger-surface); color: var(--danger); }
+.qr-panel { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+.qr-panel img { background: #fff; border-radius: 12px; padding: 6px; border: 1px solid var(--line); }
+.qr-panel > div { flex: 1 1 260px; }
+.qr-panel a.mono { overflow-wrap: anywhere; }

@@ -191,7 +191,7 @@ class TransformationController extends Controller
         $empreinte = $request->validate([
             'co2_kg' => ['required', 'numeric', 'min:0'],
             'eau_litres' => ['required', 'numeric', 'min:0'],
-        ]);
+        ]) + ['estime_par_ia' => $request->boolean('estime_par_ia')];
         $transformation->empreintes()->updateOrCreate(['etape' => $index], $empreinte);
 
         // Terminer l'étape actuelle

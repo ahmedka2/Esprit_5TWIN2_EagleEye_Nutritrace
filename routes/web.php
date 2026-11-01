@@ -19,8 +19,10 @@ use App\Http\Controllers\SignalementQualiteController;
 use App\Http\Controllers\TransformationController;
 use App\Http\Controllers\VehiculeController;
 use App\Models\Message;
+use App\Models\EmpreinteEnvironnementale;
 use App\Models\ProduitFinal;
 use App\Models\Rate;
+use App\Models\Transformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
@@ -71,6 +73,13 @@ Route::get('/produits/{produitFinal:code}', function (ProduitFinal $produitFinal
         'chatMessages' => $chatMessages,
     ]);
 })->name('produit');
+
+Route::get('/produits/{produitFinal:code}/qr.svg', fn (ProduitFinal $produitFinal) => response(
+    (new \BaconQrCode\Writer(new \BaconQrCode\Renderer\ImageRenderer(
+        new \BaconQrCode\Renderer\RendererStyle\RendererStyle(320, 2),
+        new \BaconQrCode\Renderer\Image\SvgImageBackEnd,
+    )))->writeString(route('produit', $produitFinal)),
+)->header('Content-Type', 'image/svg+xml'))->name('produit.qr');
 
 Route::post('/produits/{produitFinal:code}/signalements', function (Request $request, ProduitFinal $produitFinal) {
     $data = $request->validate([
@@ -174,6 +183,16 @@ Route::prefix('distributeur')->name('distributeur.')->middleware(['auth', 'verif
 
 Route::resource('transformations', TransformationController::class);
 Route::prefix('transformations')->name('transformations.')->group(function () {
+    Route::post('/{transformation}/etape/{index}/estimer', function (Transformation $transformation, int $index) {
+        abort_unless(isset($transformation->etapes[$index]), 404);
+        try {
+            return EmpreinteEnvironnementale::estimer($transformation, $index);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'Estimation IA indisponible pour le moment. Saisissez les valeurs à la main.'], 503);
+        }
+    })->middleware(['auth', 'throttle:10,1'])->name('etape.estimer');
     Route::post(
         '/{transformation}/lancer',
         [TransformationController::class, 'lancer']
