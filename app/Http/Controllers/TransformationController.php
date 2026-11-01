@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Transformation;
 use App\Models\MatierePremiere;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TransformationController extends Controller
 {
@@ -51,18 +53,21 @@ class TransformationController extends Controller
                 'statut' => 'en_attente',
             ])
             ->toArray();
-        $matierePremiere = MatierePremiere::findOrFail($validated['matiere_premiere_id']);
+        DB::transaction(function () use ($validated, $etapes, $request) {
+            $matierePremiere = $this->reserverStock($validated['matiere_premiere_id'], $validated['quantite_utilisee']);
 
-        Transformation::create([
-            'reference'         => Transformation::genererReference(),
-            'matiere_premiere_id' => $matierePremiere->id,
-            'matiere_premiere'  => $matierePremiere->name,
-            'unite'             => $validated['unite'],
-            'quantite_utilisee' => $validated['quantite_utilisee'],
-            'etapes'            => $etapes,
-            'etape_actuelle'    => 0,
-            'statut'            => 'brouillon',
-        ]);
+            Transformation::create([
+                'reference'         => Transformation::genererReference(),
+                'user_id'           => $request->user()?->id,
+                'matiere_premiere_id' => $matierePremiere->id,
+                'matiere_premiere'  => $matierePremiere->name,
+                'unite'             => $validated['unite'],
+                'quantite_utilisee' => $validated['quantite_utilisee'],
+                'etapes'            => $etapes,
+                'etape_actuelle'    => 0,
+                'statut'            => 'brouillon',
+            ]);
+        });
         return redirect()->route('transformations.index')
             ->with('success', 'Transformation créée avec succès.');
     }
@@ -120,14 +125,18 @@ class TransformationController extends Controller
                 'statut' => 'en_attente',
             ])
             ->toArray();
-        $matierePremiere = MatierePremiere::findOrFail($validated['matiere_premiere_id']);
-        $transformation->update([
-            'matiere_premiere_id' => $matierePremiere->id,
-            'matiere_premiere'  => $matierePremiere->name,
-            'unite'             => $validated['unite'],
-            'quantite_utilisee' => $validated['quantite_utilisee'],
-            'etapes'            => $etapes,
-        ]);
+        DB::transaction(function () use ($validated, $etapes, $transformation) {
+            $this->restituerStock($transformation);
+            $matierePremiere = $this->reserverStock($validated['matiere_premiere_id'], $validated['quantite_utilisee']);
+
+            $transformation->update([
+                'matiere_premiere_id' => $matierePremiere->id,
+                'matiere_premiere'  => $matierePremiere->name,
+                'unite'             => $validated['unite'],
+                'quantite_utilisee' => $validated['quantite_utilisee'],
+                'etapes'            => $etapes,
+            ]);
+        });
         return redirect()->route('transformations.index')
             ->with('success', 'Transformation mise à jour avec succès.');
     }
@@ -143,7 +152,10 @@ class TransformationController extends Controller
                 ->route('transformations.index')
                 ->with('error', 'Seules les transformations en brouillon peuvent être supprimées.');
         }
-        $transformation->delete();
+        DB::transaction(function () use ($transformation) {
+            $this->restituerStock($transformation);
+            $transformation->delete();
+        });
         return redirect()->route('transformations.index')
             ->with('success', 'Transformation supprimée avec succès.');
     }
@@ -236,6 +248,39 @@ class TransformationController extends Controller
         ]);
 
         return back()->with('success', 'Transformation finalisée.');
+    }
+
+    /**
+     * Décrémente le stock de la matière première (verrouillée pendant la transaction).
+     * Un stock non renseigné (null) n'est pas suivi.
+     */
+    private function reserverStock(int $matiereId, float|string $quantite): MatierePremiere
+    {
+        $matiere = MatierePremiere::lockForUpdate()->findOrFail($matiereId);
+
+        if ($matiere->quantite !== null) {
+            if ((float) $matiere->quantite < (float) $quantite) {
+                throw ValidationException::withMessages([
+                    'quantite_utilisee' => sprintf(
+                        'Stock insuffisant : %s disponible chez le producteur.',
+                        rtrim(rtrim(number_format((float) $matiere->quantite, 3, ',', ' '), '0'), ',').' '.($matiere->unite === 'litre' ? 'L' : 'kg')
+                    ),
+                ]);
+            }
+            $matiere->decrement('quantite', $quantite);
+        }
+
+        return $matiere;
+    }
+
+    /** Remet en stock la quantité réservée par une transformation. */
+    private function restituerStock(Transformation $transformation): void
+    {
+        $matiere = MatierePremiere::lockForUpdate()->find($transformation->matiere_premiere_id);
+
+        if ($matiere && $matiere->quantite !== null) {
+            $matiere->increment('quantite', $transformation->quantite_utilisee);
+        }
     }
 
     private function messagesValidation(): array

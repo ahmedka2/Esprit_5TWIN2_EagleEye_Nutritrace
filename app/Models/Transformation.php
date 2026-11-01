@@ -13,6 +13,7 @@ class Transformation extends Model
     protected $fillable = [
         'reference',
         'matiere_premiere_id',
+        'user_id',
         'matiere_premiere',
         'unite',
         'quantite_utilisee',
@@ -40,6 +41,11 @@ class Transformation extends Model
     public function empreintes(): HasMany
     {
         return $this->hasMany(EmpreinteEnvironnementale::class)->orderBy('etape');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function matierePremiere(): BelongsTo

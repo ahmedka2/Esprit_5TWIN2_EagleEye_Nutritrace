@@ -9,8 +9,13 @@ use App\Models\Categorie;
 use App\Models\Certification;
 use App\Models\MatierePremiere;
 use App\Models\User;
+use App\Services\MatierePremiereAiPrefill;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class MatierePremiereController extends Controller
@@ -52,6 +57,47 @@ class MatierePremiereController extends Controller
         ]);
     }
 
+    /** Propose des valeurs de formulaire à partir d'une phrase libre ; n'enregistre rien. */
+    public function aiPrefill(Request $request, MatierePremiereAiPrefill $prefill): JsonResponse
+    {
+        $this->authorize('create', MatierePremiere::class);
+
+        $validated = $request->validate(['prompt' => ['required', 'string', 'min:3', 'max:500']]);
+
+        try {
+            return response()->json($prefill->extraire($validated['prompt']));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'L\'assistant IA est indisponible. Remplissez le formulaire manuellement.'], 502);
+        }
+    }
+
+    public function historique(Request $request, MatierePremiere $matierePremiere): View
+    {
+        return view('admin.matieres-premieres.historique', $this->donneesHistorique($request, $matierePremiere));
+    }
+
+    public function historiquePdf(Request $request, MatierePremiere $matierePremiere): Response
+    {
+        return Pdf::loadView('admin.matieres-premieres.historique-pdf', $this->donneesHistorique($request, $matierePremiere))
+            ->download('historique-'.Str::slug($matierePremiere->name).'.pdf');
+    }
+
+    private function donneesHistorique(Request $request, MatierePremiere $matierePremiere): array
+    {
+        $this->authorize('view', $matierePremiere);
+
+        $achats = $matierePremiere->transformations()->with('user')->latest()->get();
+
+        return [
+            'matierePremiere' => $matierePremiere->load('categorie', 'producteur'),
+            'achats' => $achats,
+            'totalAchete' => $achats->sum('quantite_utilisee'),
+            'routePrefix' => $this->routePrefix($request),
+        ];
+    }
+
     public function store(StoreMatierePremiereRequest $request): RedirectResponse
     {
         $data = $request->validated();
@@ -61,6 +107,8 @@ class MatierePremiereController extends Controller
         if ($request->user()->isProducteur()) {
             $data['producteur_id'] = $request->user()->id;
         }
+
+        $data['quantite_initiale'] = $data['quantite'];
 
         $matiere = MatierePremiere::create($data);
         $matiere->certifications()->sync($certificationIds);
@@ -99,6 +147,9 @@ class MatierePremiereController extends Controller
         if ($request->user()->isProducteur()) {
             unset($data['producteur_id']);
         }
+
+        // Une correction du stock décale la quantité initiale : initiale = restante + achetée.
+        $data['quantite_initiale'] = (float) $matierePremiere->quantite_initiale + ((float) $data['quantite'] - (float) $matierePremiere->quantite);
 
         $matierePremiere->update($data);
         $matierePremiere->certifications()->sync($certificationIds);
