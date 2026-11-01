@@ -399,3 +399,14 @@ legend { font: 700 1.05rem var(--display); padding: 0 .4rem; margin-left: -.4rem
 .qr-panel img { background: #fff; border-radius: 12px; padding: 6px; border: 1px solid var(--line); }
 .qr-panel > div { flex: 1 1 260px; }
 .qr-panel a.mono { overflow-wrap: anywhere; }
+
+/* Fil de la chaîne de traçabilité */
+.chaine { margin-bottom: 1.25rem; }
+.chaine ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; }
+.chaine li { display: grid; gap: .15rem; min-width: 0; padding: .6rem .85rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); position: relative; }
+.chaine li + li::before { content: "→"; position: absolute; left: -.48rem; top: 50%; translate: -50% -50%; color: var(--ink-2); font-size: .8rem; }
+.chaine li.done { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.chaine li.current { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border-color: var(--accent); }
+.chaine-label { font: 600 .65rem var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); }
+.chaine a, .chaine strong { font-size: .88rem; overflow-wrap: anywhere; }
+@media (max-width: 720px) { .chaine ol { grid-template-columns: 1fr 1fr; } .chaine li + li::before { display: none; } }

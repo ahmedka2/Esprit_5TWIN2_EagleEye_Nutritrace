@@ -5,6 +5,7 @@
 @php($steps = $transformation->etapes ?? [])
 @php($scheduledSteps = collect($steps)->contains(fn($step) => array_key_exists('duree_prevue_min', $step)))
 @php($empreintes = $transformation->empreintes->keyBy('etape'))
+<x-chaine :transformation="$transformation" current="transformation" />
 @if (session('success'))<p class="flash" role="status">{{ session('success') }}</p>@endif
 @if (session('error'))<p class="flash flash-error" role="alert">{{ session('error') }}</p>@endif
 <section class="panel">

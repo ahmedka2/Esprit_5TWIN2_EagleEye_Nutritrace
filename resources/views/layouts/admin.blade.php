@@ -22,6 +22,7 @@
                     <a href="{{ route('admin.matieres-premieres.index') }}" @class(['active' => request()->routeIs('admin.matieres-premieres.*')])>Mati&#232;res premi&#232;res</a>
                     <a href="{{ route('transformations.index') }}" @class(['active' => request()->routeIs('transformations.*')])>Transformations</a>
                     <a href="{{ route('produits-finaux.index') }}" @class(['active' => request()->routeIs('produits-finaux.*')])>Produits finis</a>
+                    <a href="{{ route('admin.livraisons.index') }}" @class(['active' => request()->routeIs('admin.livraisons.*')])>Livraisons</a>
                 @else
                 <a href="{{ route('admin.dashboard') }}" @class(['active' => request()->routeIs('admin.dashboard')])>Tableau de bord</a>
                 <a href="{{ route('admin.matieres-premieres.index') }}" @class(['active' => request()->routeIs('admin.matieres-premieres.*')])>Mati&#232;res premi&#232;res</a>
@@ -30,12 +31,10 @@
                 <a href="{{ route('admin.vehicules.index') }}" @class(['active' => request()->routeIs('admin.vehicules.*')])>Véhicules</a>
                 <a href="{{ route('admin.livraisons.index') }}" @class(['active' => request()->routeIs('admin.livraisons.*')])>Livraisons</a>
                 <a href="{{ route('admin.rates.index') }}" @class(['active' => request()->routeIs('admin.rates.*')])>Signalements</a>
-                <a href="#" aria-disabled="true">Acteurs</a>
                 @if (auth()->user()?->isAdmin())
                     <a href="{{ route('admin.certifications.index') }}" @class(['active' => request()->routeIs('admin.certifications.*')])>Certifications</a>
                     <a href="{{ route('admin.categories.index') }}" @class(['active' => request()->routeIs('admin.categories.*')])>Catégories</a>
                 @endif
-                @php $adminUnread = auth()->user()?->unreadMessagesCount() ?? 0; @endphp
                 <a href="{{ route('chat.index') }}" @class(['active' => request()->routeIs('chat.*')]) style="display: flex; justify-content: space-between; align-items: center;">
                     <span>Messagerie</span>
                     @if ($adminUnread > 0)

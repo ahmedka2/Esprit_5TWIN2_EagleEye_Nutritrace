@@ -8,6 +8,7 @@
 @endsection
 
 @section('content')
+    <x-chaine :produit="$produitFinal" current="produit" />
     <p><a class="btn btn-ghost" href="{{ route('produits-finaux.download', $produitFinal) }}">Télécharger la fiche PDF</a></p>
 
     @if (session('success')) <p class="flash" role="status">{{ session('success') }}</p> @endif
@@ -58,6 +59,28 @@
             </dl>
         @else
             <p class="muted">La transformation source n’est plus disponible.</p>
+        @endif
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2>Livraison</h2>
+            @if ($l = $produitFinal->livraison)
+                <a class="btn btn-ghost" href="{{ route('admin.livraisons.show', $l) }}">Voir la livraison</a>
+            @else
+                <a class="btn" href="{{ route('admin.livraisons.create', ['produit_code' => $produitFinal->code]) }}">Planifier la livraison</a>
+            @endif
+        </div>
+        @if ($l)
+            <dl class="detail-grid">
+                <div><dt>Trajet</dt><dd>{{ $l->depart }} → {{ $l->arrivee }}</dd></div>
+                <div><dt>Statut</dt><dd><span class="tag">{{ ucfirst(str_replace('_', ' ', $l->statut)) }}</span></dd></div>
+                <div><dt>Véhicule</dt><dd class="mono">{{ $l->vehicule?->immatriculation ?? '—' }}</dd></div>
+                <div><dt>Émissions transport</dt><dd class="mono">{{ number_format($l->co2_livraison, 2, ',', ' ') }} kg CO₂</dd></div>
+            </dl>
+            <p class="muted small">Cette étape apparaît dans le parcours public du lot.</p>
+        @else
+            <p class="muted">Aucune livraison pour ce lot. Une fois planifiée, elle s’ajoute au parcours public.</p>
         @endif
     </section>
 

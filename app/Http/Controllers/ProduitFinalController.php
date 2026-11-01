@@ -76,7 +76,7 @@ class ProduitFinalController extends Controller
     public function show(ProduitFinal $produitFinal)
     {
         // On charge la transformation ET son lot de matiÃ¨re premiÃ¨re (plus tard)
-        $produitFinal->load('transformation');
+        $produitFinal->load('transformation.matierePremiere', 'livraison.vehicule');
 
         return view('produits_finaux.show', compact('produitFinal'));
     }

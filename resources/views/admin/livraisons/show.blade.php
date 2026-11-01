@@ -7,6 +7,7 @@
 @endsection
 
 @section('content')
+<x-chaine :livraison="$livraison" current="livraison" />
 <section class="panel livraison-summary">
     <div class="panel-head">
         <div>
@@ -75,7 +76,7 @@
             <p class="eyebrow"><x-icon name="package" /> Produit affecté</p>
             <h2>{{ $livraison->produitFinal->nom }}</h2>
         </div>
-        <a class="btn btn-ghost" href="{{ route('produit', ['produitFinal' => $livraison->produitFinal->code]) }}">Voir le produit</a>
+        <a class="btn btn-ghost" href="{{ route('produit', ['produitFinal' => $livraison->produitFinal->code]) }}">Voir le parcours public</a>
     </div>
     <dl>
         <div><dt>Code</dt><dd class="mono">{{ $livraison->produitFinal->code }}</dd></div>

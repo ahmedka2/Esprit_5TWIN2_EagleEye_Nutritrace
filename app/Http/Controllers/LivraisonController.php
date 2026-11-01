@@ -30,6 +30,7 @@ class LivraisonController extends Controller
         return view('admin.livraisons.form', $this->viewData([
             'livraison' => new Livraison,
             'vehicules' => $this->vehicules(),
+            'produitsLibres' => $this->produitsLibres(),
         ]));
     }
 
@@ -41,6 +42,7 @@ class LivraisonController extends Controller
         $livraison = $this->isDistributeurArea()
             ? $request->user()->livraisons()->create($data)
             : Livraison::create($data);
+        $this->syncStatutProduit($livraison);
 
         return redirect()
             ->route($this->routePrefix().'.livraisons.show', $livraison)
@@ -65,6 +67,7 @@ class LivraisonController extends Controller
         return view('admin.livraisons.form', $this->viewData([
             'livraison' => $livraison,
             'vehicules' => $this->vehicules(),
+            'produitsLibres' => $this->produitsLibres(),
         ]));
     }
 
@@ -74,7 +77,9 @@ class LivraisonController extends Controller
         $this->ensureOwnership($request, $livraison);
         $data = $this->deliveryData($request);
         $this->ensureVehicleOwnership($request, $data['vehicule_id']);
+        $ancienProduitId = $livraison->produit_final_id;
         $livraison->update($data);
+        $this->syncStatutProduit($livraison, $ancienProduitId);
 
         return redirect()
             ->route($this->routePrefix().'.livraisons.show', $livraison)
@@ -86,6 +91,7 @@ class LivraisonController extends Controller
         // Supprime la livraison sélectionnée.
         $this->ensureOwnership($request, $livraison);
         $livraison->delete();
+        $livraison->produitFinal?->update(['statut' => 'disponible']);
 
         return redirect()
             ->route($this->routePrefix().'.livraisons.index')
@@ -101,6 +107,25 @@ class LivraisonController extends Controller
         return $this->isDistributeurArea()
             ? request()->user()->vehicules()->orderBy('immatriculation')->get()
             : Vehicule::query()->orderBy('immatriculation')->get();
+    }
+
+    /**
+     * Codes des produits finis sans livraison, proposés dans le formulaire.
+     */
+    private function produitsLibres()
+    {
+        return ProduitFinal::whereDoesntHave('livraison')->latest()->limit(200)->pluck('nom', 'code');
+    }
+
+    /**
+     * Le produit livré passe « expédié » ; il redevient « disponible » si la livraison est annulée ou change de produit.
+     */
+    private function syncStatutProduit(Livraison $livraison, ?int $ancienProduitId = null): void
+    {
+        if ($ancienProduitId && $ancienProduitId !== $livraison->produit_final_id) {
+            ProduitFinal::whereKey($ancienProduitId)->update(['statut' => 'disponible']);
+        }
+        $livraison->produitFinal()->update(['statut' => $livraison->statut === 'annulee' ? 'disponible' : 'expedie']);
     }
 
     private function isDistributeurArea(): bool
