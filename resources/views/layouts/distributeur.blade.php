@@ -20,6 +20,7 @@
                 <a href="{{ route('distributeur.dashboard') }}" @class(['active' => request()->routeIs('distributeur.dashboard')])>Tableau de bord</a>
                 <a href="{{ route('distributeur.vehicules.index') }}" @class(['active' => request()->routeIs('distributeur.vehicules.*')])>Véhicules</a>
                 <a href="{{ route('distributeur.livraisons.index') }}" @class(['active' => request()->routeIs('distributeur.livraisons.*')])>Livraisons</a>
+                <a href="{{ route('distributeur.statistiques.index') }}" @class(['active' => request()->routeIs('distributeur.statistiques.*')])>Statistiques CO₂</a>
             </nav>
             <a class="sidebar-foot" href="{{ route('home') }}">← Voir le site public</a>
         </aside>
@@ -45,5 +46,6 @@
             </main>
         </div>
     </div>
+    @yield('scripts')
 </body>
 </html>

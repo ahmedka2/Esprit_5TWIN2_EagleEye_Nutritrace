@@ -12,7 +12,7 @@
         <thead>
             <tr>
                 <th scope="col">Produit</th><th scope="col">Trajet</th><th scope="col">Véhicule</th>
-                <th scope="col">Départ</th><th scope="col">Statut</th><th scope="col"><span class="sr-only">Actions</span></th>
+                <th scope="col">Départ</th><th scope="col" class="num">CO₂</th><th scope="col">Statut</th><th scope="col"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
@@ -33,11 +33,12 @@
                 </td>
                 <td><span class="mono">{{ $livraison->vehicule->immatriculation }}</span><br><span class="muted small">{{ \App\Enums\TypeVehicule::labelFor($livraison->vehicule->type) }}</span></td>
                 <td><time datetime="{{ $livraison->date_depart->toDateTimeString() }}">{{ $livraison->date_depart->format('d/m/Y') }}</time><br><span class="muted small">{{ $livraison->date_depart->format('H:i') }}</span></td>
+                <td class="num mono">{{ number_format($livraison->co2_livraison, 2, ',', ' ') }} kg</td>
                 <td><span class="tag">{{ ucfirst(str_replace('_', ' ', $livraison->statut)) }}</span></td>
                 <td class="row-actions"><a href="{{ route($routePrefix.'.livraisons.show', $livraison) }}"><x-icon name="eye" /> Voir</a><a href="{{ route($routePrefix.'.livraisons.edit', $livraison) }}"><x-icon name="pencil" /> Modifier</a></td>
             </tr>
         @empty
-            <tr><td colspan="6" class="empty">Aucune livraison. <a href="{{ route($routePrefix.'.livraisons.create') }}">Ajoutez la première</a>.</td></tr>
+            <tr><td colspan="7" class="empty">Aucune livraison. <a href="{{ route($routePrefix.'.livraisons.create') }}">Ajoutez la première</a>.</td></tr>
         @endforelse
         </tbody>
     </table>
