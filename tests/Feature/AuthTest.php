@@ -279,12 +279,17 @@ class AuthTest extends TestCase
         $transformateur = User::factory()->transformateur()->create(['email_verified_at' => now()]);
         $distributeur = User::factory()->distributeur()->create(['email_verified_at' => now()]);
 
-        foreach ([$admin, $producteur, $transformateur, $distributeur] as $proUser) {
+        foreach ([$admin, $producteur, $transformateur] as $proUser) {
             $response = $this->actingAs($proUser)->get('/admin');
             $response->assertStatus(200);
             $response->assertSee('Tableau de bord');
             $response->assertSee($proUser->role_label);
         }
+
+        // Distributeurs have their own space and are sent there.
+        $this->actingAs($distributeur)->get('/admin')
+            ->assertRedirect(route('distributeur.dashboard'))
+            ->assertSessionHas('error');
     }
 
     public function test_user_model_role_helper_methods(): void
