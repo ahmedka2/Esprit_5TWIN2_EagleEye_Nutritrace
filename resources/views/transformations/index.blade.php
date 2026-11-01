@@ -3,6 +3,7 @@
 @section('title', 'Transformations')
 
 @section('actions')
+    <a class="btn btn-ghost" href="{{ route('transformations.ai.create') }}">Planifier avec l’IA</a>
     <a class="btn" href="{{ route('transformations.create') }}"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Nouvelle transformation</a>
 @endsection
 

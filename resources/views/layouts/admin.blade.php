@@ -15,9 +15,16 @@
 
     <div class="shell">
         <aside class="sidebar">
-            <a class="wordmark" href="{{ route('admin.dashboard') }}">Nutri<span>Trace</span> <small>Pro</small></a>
+            <a class="wordmark" href="{{ auth()->user()?->isTransformateur() ? route('transformations.index') : route('admin.dashboard') }}">Nutri<span>Trace</span> <small>Pro</small></a>
+            @php $adminUnread = auth()->user()?->unreadMessagesCount() ?? 0; @endphp
             <nav aria-label="Administration">
+                @if (auth()->user()?->isTransformateur())
+                    <a href="{{ route('admin.matieres-premieres.index') }}" @class(['active' => request()->routeIs('admin.matieres-premieres.*')])>Mati&#232;res premi&#232;res</a>
+                    <a href="{{ route('transformations.index') }}" @class(['active' => request()->routeIs('transformations.*')])>Transformations</a>
+                    <a href="{{ route('produits-finaux.index') }}" @class(['active' => request()->routeIs('produits-finaux.*')])>Produits finis</a>
+                @else
                 <a href="{{ route('admin.dashboard') }}" @class(['active' => request()->routeIs('admin.dashboard')])>Tableau de bord</a>
+                <a href="{{ route('admin.matieres-premieres.index') }}" @class(['active' => request()->routeIs('admin.matieres-premieres.*')])>Mati&#232;res premi&#232;res</a>
                 <a href="{{ route('transformations.index') }}" @class(['active' => request()->routeIs('transformations.*')])>Transformations</a>
                 <a href="{{ route('produits-finaux.index') }}" @class(['active' => request()->routeIs('produits-finaux.*')])>Produits finis</a>
                 <a href="{{ route('admin.vehicules.index') }}" @class(['active' => request()->routeIs('admin.vehicules.*')])>Véhicules</a>
@@ -43,6 +50,7 @@
                         <span style="background: #EF4444; color: #fff; border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; line-height: 1;">{{ $openAdminSigCount }}</span>
                     @endif
                 </a>
+                @endif
             </nav>
             <a class="sidebar-foot" href="{{ route('home') }}">← Voir le site public</a>
         </aside>
